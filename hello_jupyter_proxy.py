@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.23'
+__version__ = '0.24'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -104,14 +104,14 @@ CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
 <!-- 将以下代码片段放于你的网页内，建议放于 body 底部 -->
 <script
   data-host-id="1"
-  data-auto-reg="false"
-  data-login-token="eyJhbGciOiJIUzI1NiJ9.eyJkIjp7InVpZCI6OSwiZGV2aWNlIjoid2ViOnBkRVA5Sk1DWHZfMUEtRUVxQTk3diIsImlzX2FkbWluIjpmYWxzZSwiaXNfZ3Vlc3QiOmZhbHNlfSwiZSI6IjIwMjQtMDItMjlUMTU6NDQ6NTAuNjMzOTk0MDM0WiIsIm4iOiJMUHpKSlVhbDRHVUFBQUFBIiwidCI6IkFjY2Vzc1Rva2VuIn0.OcUn6VRcHPYAX6YFiiheRA3M1m1Dr6UVkzHx88nbcN0"
+  data-auto-reg="true"
+  data-login-token=""
   data-close-width="52"
   data-close-height="52"
   data-open-width="380"
   data-open-height="680"
   data-position="right"
-  data-welcome="自定义欢迎语"
+  data-welcome="歡迎留言"
   src="https://chat.yunlab.synology.me/widget.js"
   async
 ></script>
