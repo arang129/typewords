@@ -63,14 +63,57 @@ TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
-<title> 公告區 </title>
+<title>YunLab</title>
+<style>
+  body {
+    background-color: #f0f0f0; /* 設定背景顏色 */
+    font-family: Arial, sans-serif; /* 使用無襯線字體 */
+  }
+
+  .container {
+    width: 80%;
+    margin: 0 auto; /* 中心對齊 */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* 使圖片在容器中居中 */
+    gap: 20px; /* 圖片間距 */
+  }
+
+  a {
+    text-decoration: none; /* 移除超連結下劃線 */
+    color: black; /* 設定超連結顏色 */
+  }
+
+  img {
+    border-radius: 10px; /* 圖片圓角 */
+    transition: transform 0.3s ease; /* 平滑過渡效果 */
+  }
+
+  img:hover {
+    transform: scale(1.1); /* 滑鼠懸浮時放大 */
+  }
+</style>
 </head>
 <body>
-<h1>【YunLab書籤】</h1>
-<!-- 加入圖片超連結 -->
-<a href="https://memos.yunlab.synology.me/"  target="_blank">
-    <img src="https://truth.bahamut.com.tw/s01/201610/88ba080e7c31f84a956be1e7861ccf28.JPG" alt="Linked Image"  title="Blog">
-</a>
+
+<h1 style="text-align: center;">書籤</h1>
+
+<div class="container">
+  <!-- 加入圖片超連結 -->
+  <a href="https://memos.yunlab.synology.me/" target="_blank">
+      <img src="https://i.imgur.com/snyB4gl.png" width="100" alt="Blog" title="Blog">
+  </a>
+  <a href="https://eclass.yuntech.edu.tw/" target="_blank">
+      <img src="https://i.imgur.com/AUJrBbe.png" width="100" alt="Eclass" title="Eclass">
+  </a>
+  <a href="https://finance.yunlab.synology.me/" target="_blank">
+      <img src="https://i.imgur.com/n15UqXn.png" width="140" alt="Eclass" title="期貨與選擇權">
+  </a>
+  <a href="https://data.yunlab.synology.me/" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
+  </a>
+</div>
+
 </body>
 </html>
 """
