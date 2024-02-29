@@ -63,10 +63,10 @@ TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
-<title>Hello Jupyter-server-proxy</title>
+<title>Hello Jupyter-server-proxy (YunLab)</title>
 </head>
 <body>
-<h1>Hello Jupyter-server-proxy</h1>
+<h1>Hello Jupyter-server-proxy (YunLab)</h1>
 <p>Request path is <code>{path}</code></p>
 <p>Headers:</p>
 <pre>{headers}</pre>
