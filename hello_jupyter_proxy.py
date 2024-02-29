@@ -20,7 +20,7 @@ def setup_hello():
         'unix_socket': True,
         'launcher_entry': {
             'enabled': True,
-            'icon_path': 'https://i.imgur.com/snyB4gl.png',
+            'icon_path': '/opt/tljh/hub/share/jupyterhub/yunlab.svg',
             'title': 'YunLab',
         },
     }
