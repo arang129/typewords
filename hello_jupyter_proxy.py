@@ -7,7 +7,25 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import sqlite3
+from urllib.parse import parse_qs
+import datetime
+
 __version__ = '0.2'
+
+# 定義數據庫位置
+DATABASE = '/opt/tljh/hub/share/hello/data.db'
+
+def init_db():
+    """初始化數據庫"""
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS comments
+                 (date TEXT, name TEXT, message TEXT)''')
+    conn.commit()
+    conn.close()
+
+init_db()  # 確保啟動時數據庫已初始化
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -31,22 +49,61 @@ def setup_hello():
 # This example uses Python's low-level http.server, to minimise dependencies.
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        server_addr = self.server.server_address
-        if isinstance(server_addr, tuple):
-            server_addr = "{}:{}".format(*server_addr)
+        # 加載留言
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute("SELECT * FROM comments ORDER BY date DESC")
+        comments = c.fetchall()
+        conn.close()
+        
+        comments_html = ''.join([f'<div><p>{comment[1]}: {comment[2]} <small>{comment[0]}</small></p></div>' for comment in comments])
+        
+        # 修改處：加入留言板的 HTML 結構
+        message_board_html = """
+        <div id="comment-section">
+            <h2>留言板</h2>
+            <form action="/" method="post">
+                <label for="name">姓名：</label>
+                <input type="text" id="name" name="name" required>
+                <label for="message">訊息：</label>
+                <textarea id="message" name="message" required></textarea>
+                <button type="submit">送出</button>
+            </form>
+            <div id="comments">
+                {}
+            </div>
+        </div>
+        """.format(comments_html)
+        
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(TEMPLATE.format(
+            path=self.path, headers=self._headers_hide_cookie(),
+            server_address=self.server.server_address,
+            message_board=message_board_html  # 修改處：將留言板 HTML 加入模板
+        ).encode('utf-8'))
 
-        try:
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(TEMPLATE.format(
-                path=self.path, headers=self._headers_hide_cookie(),
-                server_address=server_addr,
-            ).encode('utf-8'))
-        except BrokenPipeError:
-            # Connection closed without the client reading the whole response.
-            # Not a problem for the server.
-            pass
+    def do_POST(self):
+        # 處理留言的儲存
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length).decode('utf-8')
+        post_data = parse_qs(post_data)
 
+        name = post_data['name'][0]
+        message = post_data['message'][0]
+        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute("INSERT INTO comments (date, name, message) VALUES (?, ?, ?)",
+                  (date, name, message))
+        conn.commit()
+        conn.close()
+
+        self.send_response(303)  # 重定向到 GET 方法
+        self.send_header('Location', '/')
+        self.end_headers()
+        
     def address_string(self):
         # Overridden to fix logging when serving on Unix socket
         if isinstance(self.client_address, str):
@@ -86,6 +143,8 @@ TEMPLATE = """\
     <img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
 </a>
 
+<!-- 留言板 HTML 結構加在這裡 -->
+{message_board}
 </body>
 </html>
 """
