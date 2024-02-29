@@ -64,20 +64,25 @@ TEMPLATE = """\
 <html>
 <head>
 <title> YunLab </title>
+<style>
+    .image-link {
+        margin-right: 4em; /* 將每個圖片間隔至少4個em寬度 */
+    }
+</style>
 </head>
 <body>
 <h1>書籤</h1>
 <!-- 加入圖片超連結 --> 
-<a href="https://memos.yunlab.synology.me/" target="_blank">
+<a href="https://memos.yunlab.synology.me/" target="_blank" class="image-link">
     <img src="https://i.imgur.com/snyB4gl.png" width="100" alt="Blog" title="Blog">
 </a>
-<a href="https://eclass.yuntech.edu.tw/" target="_blank">
+<a href="https://eclass.yuntech.edu.tw/" target="_blank" class="image-link">
     <img src="https://i.imgur.com/AUJrBbe.png" width="100" alt="Eclass" title="Eclass">
 </a>
-<a href="https://finance.yunlab.synology.me/" target="_blank">
-    <img src="https://i.imgur.com/n15UqXn.png" width="140" alt="Eclass" title="期貨與選擇權">
+<a href="https://finance.yunlab.synology.me/" target="_blank" class="image-link">
+    <img src="https://i.imgur.com/n15UqXn.png" width="140" alt="期貨與選擇權" title="期貨與選擇權">
 </a>
-<a href="https://data.yunlab.synology.me/" target="_blank">
+<a href="https://data.yunlab.synology.me/" target="_blank" class="image-link">
     <img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
 </a>
 
