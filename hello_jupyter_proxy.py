@@ -18,6 +18,11 @@ def setup_hello():
     return {
         'command': [sys.executable, '-m', 'hello_jupyter_proxy', '-u', '{unix_socket}'],
         'unix_socket': True,
+        'launcher_entry': {
+            'enabled': True,
+            'icon_path': 'https://i.imgur.com/snyB4gl.png',
+            'title': 'YunLab',
+        },
     }
 
 # Define a web application to proxy.
