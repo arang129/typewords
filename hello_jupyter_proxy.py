@@ -105,7 +105,7 @@ CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
 <script
   data-host-id="1"
   data-auto-reg="false"
-  data-login-token=""
+  data-login-token="eyJhbGciOiJIUzI1NiJ9.eyJkIjp7InVpZCI6OSwiZGV2aWNlIjoid2ViOnBkRVA5Sk1DWHZfMUEtRUVxQTk3diIsImlzX2FkbWluIjpmYWxzZSwiaXNfZ3Vlc3QiOmZhbHNlfSwiZSI6IjIwMjQtMDItMjlUMTU6NDQ6NTAuNjMzOTk0MDM0WiIsIm4iOiJMUHpKSlVhbDRHVUFBQUFBIiwidCI6IkFjY2Vzc1Rva2VuIn0.OcUn6VRcHPYAX6YFiiheRA3M1m1Dr6UVkzHx88nbcN0"
   data-close-width="52"
   data-close-height="52"
   data-open-width="380"
