@@ -71,6 +71,10 @@ TEMPLATE = """\
 <p>Headers:</p>
 <pre>{headers}</pre>
 <p>Server is listening (behind the proxy) on <code>{server_address}</code>.</p>
+<!-- 加入圖片超連結 -->
+<a href="https://memos.yunlab.synology.me/">
+    <img src="https://truth.bahamut.com.tw/s01/201610/88ba080e7c31f84a956be1e7861ccf28.JPG" alt="Linked Image">
+</a>
 </body>
 </html>
 """
