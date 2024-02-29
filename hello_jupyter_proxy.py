@@ -84,25 +84,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         ).encode('utf-8'))
 
     def do_POST(self):
-        # 處理留言的儲存
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length).decode('utf-8')
-        post_data = parse_qs(post_data)
+        content_length = int(self.headers['Content-Length'])  # 獲取數據長度
+        post_data = self.rfile.read(content_length).decode('utf-8')  # 讀取POST數據
+        print(post_data)  # 印出POST數據，僅用於調試
 
-        name = post_data['name'][0]
-        message = post_data['message'][0]
-        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute("INSERT INTO comments (date, name, message) VALUES (?, ?, ?)",
-                  (date, name, message))
-        conn.commit()
-        conn.close()
-
-        self.send_response(303)  # 重定向到 GET 方法
+        self.send_response(303)  # 重定向到GET請求
         self.send_header('Location', '/')
         self.end_headers()
+
         
     def address_string(self):
         # Overridden to fix logging when serving on Unix socket
