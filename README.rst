@@ -1,6 +1,6 @@
 Jupyter Server Proxy Demo
 =========================
-
+Author:
 This is a demo package showing how to run a web app through
 `Jupyter Server Proxy <https://jupyter-server-proxy.readthedocs.io/en/latest/>`_.
 
