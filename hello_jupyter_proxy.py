@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.29'
+__version__ = '0.30'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -71,47 +71,48 @@ TEMPLATE = """\
 <title> YunLab </title>
 </head>
 <body>
-<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0" background="https://i.imgur.com/3ORHvnQ.jpg">
-<tbody>
-<tr>
-<td valign="top"  align="center">
-<h1>書籤</h1>
-<!-- 加入圖片超連結 --> 
-<a href="https://memos.yunlab.synology.me/" target="_blank">
-    <img src="https://i.imgur.com/snyB4gl.png" width="100" alt="Blog" title="Blog">
-</a>
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-<a href="https://eclass.yuntech.edu.tw/" target="_blank">
-    <img src="https://i.imgur.com/AUJrBbe.png" width="100" alt="Eclass" title="Eclass">
-</a>
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-<a href="https://finance.yunlab.synology.me/" target="_blank">
-    <img src="https://i.imgur.com/n15UqXn.png" width="140" alt="期貨與選擇權" title="期貨與選擇權">
-</a>
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-<a href="https://data.yunlab.synology.me/" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
-</a>
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-<a href="https://gpt.yunlab.synology.me/" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100" alt="ChatGPT" title="ChatGPT">
-</a>
-
+<table width="100%">
+  <tr>
+    <td align="center">
+      <h1>書籤</h1>
+      <!-- 加入圖片超連結 --> 
+      <a href="https://memos.yunlab.synology.me/" target="_blank">
+        <img src="https://i.imgur.com/snyB4gl.png" width="100" alt="Blog" title="Blog">
+      </a>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
+      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
+      <a href="https://eclass.yuntech.edu.tw/" target="_blank">
+        <img src="https://i.imgur.com/AUJrBbe.png" width="100" alt="Eclass" title="Eclass">
+      </a>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
+      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
+      <a href="https://finance.yunlab.synology.me/" target="_blank">
+        <img src="https://i.imgur.com/n15UqXn.png" width="140" alt="期貨與選擇權" title="期貨與選擇權">
+      </a>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
+      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
+      <a href="https://data.yunlab.synology.me/" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
+      </a>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
+      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
+      <a href="https://gpt.yunlab.synology.me/" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100" alt="ChatGPT" title="ChatGPT">
+      </a>
+    </td>
+  </tr>
+</table>
 <!-- 将以下代码片段放于你的网页内，建议放于 body 底部 -->
 <script
   data-host-id="1"
   data-auto-reg="true"
   data-login-token=""
-  data-close-width="104"
-  data-close-height="104"
+  data-close-width="90"
+  data-close-height="90"
   data-open-width="760"
   data-open-height="680"
   data-position="right"
@@ -119,11 +120,6 @@ CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
   src="https://chat.yunlab.synology.me/widget.js"
   async
 ></script>
-
-</td>
-</tr>
-</tbody>
-</table>
 
 </body>
 </html>
