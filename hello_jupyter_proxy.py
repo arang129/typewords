@@ -71,6 +71,10 @@ TEMPLATE = """\
 <title> YunLab </title>
 </head>
 <body>
+<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0" background="https://i.imgur.com/3ORHvnQ.jpg">
+<tbody>
+<tr>
+<td valign="top"  align="center">
 <h1>書籤</h1>
 <!-- 加入圖片超連結 --> 
 <a href="https://memos.yunlab.synology.me/" target="_blank">
@@ -115,6 +119,12 @@ CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
   src="https://chat.yunlab.synology.me/widget.js"
   async
 ></script>
+
+</td>
+</tr>
+</tbody>
+</table>
+
 </body>
 </html>
 """
