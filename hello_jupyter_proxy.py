@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.36'
+__version__ = '0.37'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -118,6 +118,21 @@ TEMPLATE = """\
     </td>
   </tr>
 </table>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var images = document.getElementsByTagName('img');
+    for (var i = 0; i < images.length; i++) {
+      images[i].style.borderRadius = '15px'; // 添加圆角边框
+      images[i].onmouseover = function() {
+        this.style.transform = 'scale(1.1)'; // 放大效果
+        this.style.transition = 'transform 0.5s ease'; // 平滑过渡效果
+      }
+      images[i].onmouseout = function() {
+        this.style.transform = 'scale(1)'; // 恢复原始大小
+      }
+    }
+  });
+</script>
 <!-- 将以下代码片段放于你的网页内，建议放于 body 底部 -->
 <script
   data-host-id="1"
