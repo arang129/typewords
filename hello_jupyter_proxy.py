@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.31'
+__version__ = '0.32'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -113,8 +113,8 @@ TEMPLATE = """\
   data-login-token=""
   data-close-width="80"
   data-close-height="80"
-  data-open-width="456"
-  data-open-height="816"
+  data-open-width="380"
+  data-open-height="680"
   data-position="right"
   data-welcome="歡迎留言"
   src="https://chat.yunlab.synology.me/widget.js"
