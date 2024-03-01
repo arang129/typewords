@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.28'
+__version__ = '0.29'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -106,9 +106,9 @@ CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
   data-host-id="1"
   data-auto-reg="true"
   data-login-token=""
-  data-close-width="52"
-  data-close-height="52"
-  data-open-width="380"
+  data-close-width="104"
+  data-close-height="104"
+  data-open-width="760"
   data-open-height="680"
   data-position="right"
   data-welcome="歡迎留言"
