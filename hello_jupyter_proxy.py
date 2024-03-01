@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.32'
+__version__ = '0.33'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -102,6 +102,12 @@ TEMPLATE = """\
       9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
       <a href="https://gpt.yunlab.synology.me/" target="_blank">
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100" alt="ChatGPT" title="ChatGPT">
+      </a>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
+      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
+      <a href="https://sas.yunlab.synology.me/SASStudio/" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/9/97/%E0%A6%B8%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%B8_%E0%A6%B2%E0%A7%8B%E0%A6%97%E0%A7%8B.png" width="180" alt="SAS Studio" title="SAS Studio">
       </a>
     </td>
   </tr>
