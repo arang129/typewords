@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.41'
+__version__ = '0.42'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -168,7 +168,7 @@ TEMPLATE = """\
          	<td width="33.33%" valign="top">
          	  <table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
          	  	<tr>
-         	  		<td>
+         	  		<td align="center">
          	  			<font face="arial" size="5" color="#ffffff">
 						Tutorials
          	  		   </font>
@@ -184,13 +184,13 @@ TEMPLATE = """\
          	<td width="33.33%" valign="top">
 				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
 					<tr>
-						<td>
+						<td align="center">
 							<font face="arial" size="5" color="#ffffff">
 							Derivatives
 						    </font>
 						   <br/><br/>
 						   <a href="https://finance.yunlab.synology.me/" target="_blank">
-							<img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Philippine-stock-market-board.jpg" width="100" alt="Derivatives" title="Derivatives">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Philippine-stock-market-board.jpg" width="130" alt="Derivatives" title="Derivatives">
 						  </a>
 						</td>
 					</tr>
@@ -199,13 +199,13 @@ TEMPLATE = """\
 			  <td width="33.33%" valign="top">
 				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
 					<tr>
-						<td>
+						<td align="center">
 							<font face="arial" size="5" color="#ffffff">
 							MySQL
 						   </font>
 						   <br/><br/>
 						   <a href="https://data.yunlab.synology.me/" target="_blank">
-							<img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="150" alt="MySQL" title="MySQL">
+							<img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
 						  </a>
 						</td>
 					</tr>
@@ -217,7 +217,7 @@ TEMPLATE = """\
          	<td width="33.33%" valign="top">
          	  <table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
          	  	<tr>
-         	  		<td>
+         	  		<td align="center">
          	  			<font face="arial" size="5" color="#ffffff">
 					    ChatGPT
          	  		   </font>
@@ -233,7 +233,7 @@ TEMPLATE = """\
          	<td width="33.33%" valign="top">
 				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
 					<tr>
-						<td>
+						<td align="center">
 							<font face="arial" size="5" color="#ffffff">
 							SAS Studio
 						   </font>
@@ -249,7 +249,7 @@ TEMPLATE = """\
 			  <td width="33.33%" valign="top">
 				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
 					<tr>
-						<td>
+						<td align="center">
 							<font face="arial" size="5" color="#ffffff">
 							Blog
 						   </font>
