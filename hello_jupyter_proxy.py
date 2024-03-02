@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.40'
+__version__ = '0.41'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -174,7 +174,7 @@ TEMPLATE = """\
          	  		   </font>
          	  		   <br/><br/>
 						  <a href="https://memos.yunlab.synology.me/" target="_blank">
-							<img src="https://i.imgur.com/QxuVTyY.png" width="100%" alt="教學" title="教學">
+							<img src="https://i.imgur.com/QxuVTyY.png" width="100" alt="Tutorials" title="Tutorials">
 						  </a>
          	  		</td>
          	  	</tr>
@@ -190,7 +190,7 @@ TEMPLATE = """\
 						    </font>
 						   <br/><br/>
 						   <a href="https://finance.yunlab.synology.me/" target="_blank">
-							<img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Philippine-stock-market-board.jpg" width="100%" alt="期貨與選擇權" title="期貨與選擇權">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Philippine-stock-market-board.jpg" width="100" alt="Derivatives" title="Derivatives">
 						  </a>
 						</td>
 					</tr>
@@ -205,7 +205,7 @@ TEMPLATE = """\
 						   </font>
 						   <br/><br/>
 						   <a href="https://data.yunlab.synology.me/" target="_blank">
-							<img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="100%" alt="MySQL" title="MySQL">
+							<img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="150" alt="MySQL" title="MySQL">
 						  </a>
 						</td>
 					</tr>
@@ -223,7 +223,7 @@ TEMPLATE = """\
          	  		   </font>
          	  		   <br/><br/>
 						  <a href="https://gpt.yunlab.synology.me/" target="_blank">
-							<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100%" alt="ChatGPT" title="ChatGPT">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100" alt="ChatGPT" title="ChatGPT">
 						  </a>
          	  		</td>
          	  	</tr>
@@ -239,7 +239,7 @@ TEMPLATE = """\
 						   </font>
 						   <br/><br/>
 						   <a href="https://sas.yunlab.synology.me/SASStudio/" target="_blank">
-							<img src="https://i.pinimg.com/originals/73/96/b8/7396b8543078228985df506d122df2e7.png" width="100%" alt="SAS Studio" title="SAS Studio">
+							<img src="https://i.pinimg.com/originals/73/96/b8/7396b8543078228985df506d122df2e7.png" width="100" alt="SAS Studio" title="SAS Studio">
 						  </a>
 						</td>
 					</tr>
@@ -255,7 +255,7 @@ TEMPLATE = """\
 						   </font>
 						   <br/><br/>
 						   <a href="https://blog.yunlab.synology.me/" target="_blank">
-							<img src="https://i.imgur.com/lEcnJPU.png" width="100%" alt="Blog" title="Blog">
+							<img src="https://i.imgur.com/lEcnJPU.png" width="100" alt="Blog" title="Blog">
 						  </a>
 						</td>
 					</tr>
