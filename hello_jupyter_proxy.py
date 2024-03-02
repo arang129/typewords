@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.38'
+__version__ = '0.39'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -68,64 +68,357 @@ TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
-<title> YunLab </title>
+	<title>Website in YunLab</title>
 </head>
+ 
 <body>
-<table width="100%">
+
+<!-- Start Header -->
+<table border="0" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3971b">
   <tr>
-    <td align="center">
-      <h1>書籤</h1>
-      <!-- 加入圖片超連結 --> 
-      <a href="https://memos.yunlab.synology.me/" target="_blank">
-        <img src="https://i.imgur.com/snyB4gl.png" width="100" alt="教學" title="教學">
-      </a>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-      <a href="https://eclass.yuntech.edu.tw/" target="_blank">
-        <img src="https://i.imgur.com/AUJrBbe.png" width="100" alt="Eclass" title="Eclass">
-      </a>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-      <a href="https://finance.yunlab.synology.me/" target="_blank">
-        <img src="https://i.imgur.com/n15UqXn.png" width="140" alt="期貨與選擇權" title="期貨與選擇權">
-      </a>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-      <a href="https://data.yunlab.synology.me/" target="_blank">
-        <img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="180" alt="MySQL" title="MySQL">
-      </a>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-      <a href="https://gpt.yunlab.synology.me/" target="_blank">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100" alt="ChatGPT" title="ChatGPT">
-      </a>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-      <a href="https://sas.yunlab.synology.me/SASStudio/" target="_blank">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/9/97/%E0%A6%B8%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%B8_%E0%A6%B2%E0%A7%8B%E0%A6%97%E0%A7%8B.png" width="180" alt="SAS Studio" title="SAS Studio">
-      </a>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAA
-      CAYAAAA8SCSfAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-      9TXL0Y4OHwAAAABJRU5ErkJggg==" width="32" height="1" alt=""> <!-- 透明圖片作為間隔 -->
-      <a href="https://blog.yunlab.synology.me/" target="_blank">
-        <img src="https://i.imgur.com/lEcnJPU.png" width="100" alt="Blog" title="Blog">
-      </a>
-    </td>
+  	 <td>
+  	 	<table border="0" width="85%" cellpadding="15" cellspacing="0" align="center">
+           <tr>
+           	   <td>
+           	   	  <font face="arial" color="black" size="5">
+           	       <strong>YunLab</strong>
+           	      </font>
+           	   </td>
+           	   <td width="30%">&nbsp;</td>
+           	   <td><a href="#home">
+           	   	  <font face="arial" color="#ffffff" size="3">
+           	       Home
+           	     </font></a>
+           	   </td>
+           	   <td><a href="#bookmarks">
+           	   	 <font face="arial" color="#ffffff" size="3">
+           	      Bookmarks
+           	  </font></a>
+           	  </td>
+			  <td><a href="#tutorials">
+				  <font face="arial" color="#ffffff" size="3">
+				   Tutorials
+				  </font></a>
+			  </td>
+			  <td><a href="#about">
+				<font face="arial" color="#ffffff" size="3">
+			    About
+			    </font></a>
+		      </td>
+			  <td><a href="#contact">
+				<font face="arial" color="#ffffff" size="3">
+			    Contact
+			    </font></a>
+		      </td>
+
+           </tr>
+  	 	</table>
+  	 </td>
   </tr>
 </table>
+<!-- End Header -->
+
+
+<!-- Start Home -->
+<table border="0" id="home" width="100%" cellpadding="0" cellspacing="0" bgcolor="#292929">
+  <tr>
+  	 <td>
+  	 	<table border="0" width="85%" cellpadding="15" cellspacing="0" align="center">
+           <tr>
+           	   <td align="center" valign="middle" height="300">
+           	   	 <h3>
+           	   	 	<marquee behavior="alternate" direction="left" scrollamount="2">
+           	   	 	<font face="arial" color="#ffffff" size="6">
+					Hello, World!
+           	   	    </font>
+           	   	   </marquee>
+           	   	</h3>
+           	   	 <h1>
+           	   	 	<marquee behavior="alternate" direction="right" scrollamount="2">
+           	   	 	<font face="arial" color="#f3971b" size="7">
+					Coding in the YunLab
+           	   	    </font>
+           	   	</marquee>
+           	   	</h1>
+           	   </td>
+           </tr>
+        </table>
+      </td>
+    </tr>
+ </table>
+<!-- End Home -->
+
+
+<!-- Start Bookmarks -->
+<table border="0" id="bookmarks" width="100%" cellpadding="0" cellspacing="0" bgcolor="#292929">
+  <tr>
+  	 <td>
+  	 	<table border="0" width="85%" cellpadding="15" cellspacing="0" align="center">
+  	 	<!-- Heading Start-->
+          <tr>
+           	  <td height="160" align="center" valign="middle" colspan="3">
+           	  	 <font face="arial" size="6" color=" #f3971b">
+           	  	   Bookmarks
+           	  	</font>
+           	  	<hr width="70" color="#f3971b">
+           	  </td>
+          </tr>
+        <!-- Heading  End-->
+         <tr>
+         	<td width="33.33%" valign="top">
+         	  <table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
+         	  	<tr>
+         	  		<td>
+         	  			<font face="arial" size="5" color="#ffffff">
+						Tutorials
+         	  		   </font>
+         	  		   <br/><br/>
+						  <a href="https://memos.yunlab.synology.me/" target="_blank">
+							<img src="https://i.imgur.com/QxuVTyY.png" width="100" alt="教學" title="教學">
+						  </a>
+         	  		</td>
+         	  	</tr>
+         	  </table>	
+         	</td>
+         	
+         	<td width="33.33%" valign="top">
+				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
+					<tr>
+						<td>
+							<font face="arial" size="5" color="#ffffff">
+							Derivatives
+						    </font>
+						   <br/><br/>
+						   <a href="https://finance.yunlab.synology.me/" target="_blank">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Philippine-stock-market-board.jpg" width="100" alt="期貨與選擇權" title="期貨與選擇權">
+						  </a>
+						</td>
+					</tr>
+				</table>	
+			  </td>
+			  <td width="33.33%" valign="top">
+				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
+					<tr>
+						<td>
+							<font face="arial" size="5" color="#ffffff">
+							MySQL
+						   </font>
+						   <br/><br/>
+						   <a href="https://data.yunlab.synology.me/" target="_blank">
+							<img src="https://upload.wikimedia.org/wikipedia/zh/thumb/6/62/MySQL.svg/1200px-MySQL.svg.png" width="150" alt="MySQL" title="MySQL">
+						  </a>
+						</td>
+					</tr>
+				</table>	
+			  </td>
+         </tr>
+        <tr>
+
+         	<td width="33.33%" valign="top">
+         	  <table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
+         	  	<tr>
+         	  		<td>
+         	  			<font face="arial" size="5" color="#ffffff">
+					    ChatGPT
+         	  		   </font>
+         	  		   <br/><br/>
+						  <a href="https://gpt.yunlab.synology.me/" target="_blank">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/640px-ChatGPT_logo.svg.png" width="100" alt="ChatGPT" title="ChatGPT">
+						  </a>
+         	  		</td>
+         	  	</tr>
+         	  </table>	
+         	</td>
+         	
+         	<td width="33.33%" valign="top">
+				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
+					<tr>
+						<td>
+							<font face="arial" size="5" color="#ffffff">
+							SAS Studio
+						   </font>
+						   <br/><br/>
+						   <a href="https://sas.yunlab.synology.me/SASStudio/" target="_blank">
+							<img src="https://i.pinimg.com/originals/73/96/b8/7396b8543078228985df506d122df2e7.png" width="100" alt="SAS Studio" title="SAS Studio">
+						  </a>
+						</td>
+					</tr>
+				</table>	
+			  </td>
+
+			  <td width="33.33%" valign="top">
+				<table border="0" width="100%" cellpadding="15" cellspacing="0" align="center" bgcolor="#353535">
+					<tr>
+						<td>
+							<font face="arial" size="5" color="#ffffff">
+							Blog
+						   </font>
+						   <br/><br/>
+						   <a href="https://blog.yunlab.synology.me/" target="_blank">
+							<img src="https://i.imgur.com/lEcnJPU.png" width="100" alt="Blog" title="Blog">
+						  </a>
+						</td>
+					</tr>
+				</table>	
+			  </td>
+         	  	</tr>
+         	  </table>	
+         	</td>
+
+         </tr>
+        <!-- section padding bottom -->
+           <tr>
+           	  <td height="60" colspan="3">
+                 
+           	  </td>
+           </tr>
+          <!-- section padding bottom End-->
+       </table>
+     </td>
+   </tr>
+</table>
+<!-- End Bookmarks -->
+
+<!-- Start Tutorials -->
+<table border="0" id="tutorials" width="100%" cellpadding="0" cellspacing="0" bgcolor="#292929">
+	<tr>
+		 <td>
+			 <table border="0" width="100%" cellpadding="15" cellspacing="0" align="center">
+			 <!-- Heading Start-->
+			<tr>
+				   <td height="160" align="center" valign="middle" colspan="3">
+						<font face="arial" size="6" color=" #f3971b">
+						  Tutorials
+					   </font>
+					   <hr width="70" color="#f3971b">
+				   </td>
+			</tr>
+		  <!-- Heading  End-->
+		  <tr>
+			<td width="100%" valign="top">
+				<table border="0" width="100%" cellpadding="0" cellspacing="0" align="center">
+					  <tr>
+						   <td align="center" valign="middle" height="120">
+							<iframe src="https://memos.yunlab.synology.me/explore" width="1200px" height="1000px" frameborder="0"></iframe>
+						   </td>
+					  </tr>
+				</table>  
+		  </td>
+		  </tr>
+		  <!-- section padding bottom -->
+			 <tr>
+				   <td height="60" colspan="3">
+				   
+				   </td>
+			 </tr>
+			<!-- section padding bottom End-->
+			 </table>
+		 </td>
+	</tr>
+  </table>
+  <!-- End Tutorials -->
+  
+
+<!-- Start About -->
+<table border="0" id="about" width="100%" cellpadding="0" cellspacing="0" bgcolor="#353535">
+	<tr>
+		 <td>
+			 <table border="0" width="85%" cellpadding="15" cellspacing="0" align="center">
+				 <!-- Heading Start-->
+			 <tr>
+				   <td height="160" align="center" valign="middle" colspan="2">
+						<font face="arial" size="6" color=" #f3971b">
+						  About
+					   </font>
+					   <hr width="70" color="#f3971b">
+				   </td>
+			 </tr>
+			 <!-- Heading  End-->
+			 <tr>
+					<td width="35%">
+						  <img src="https://umf.yuntech.edu.tw/upload/teacher_20221227101549.jpg" width="100%" alt="me" />
+					</td>
+					<td width="65%" valign="top">
+						  <table border="0" width="100%" cellpadding="0" cellspacing="0" align="center">
+								<tr>
+									 <td height="40">
+										 <font face="arial" size="4" color=" #ffffff">
+										 Hi, I'm Wen-Rang Liu
+										</font>
+									 </td>
+								</tr>
+								<tr>
+									<td>
+										<p>
+											<font face="arial" size="3" color="#c2c0c3">
+												Wen-Rang Liu is an Assistant Professor in the Department of Finance at the National Yunlin University of Science and Technology. He received his Ph.D. and Master’s degrees in Finance from National Taiwan University and his Bachelor’s degree from National Tsing Hua University. Prior to his current position, Wen-Rang undertook postdoctoral research at the Hong Kong Polytechnic University. He is an SGS-certified lead auditor for ISO 14064-2:2019 and has completed the PAS 2060:2014 training course by SGS. He has participated in collaborative projects between industry and academia, specifically in the field of carbon inventory. His academic research interests lie in empirical asset pricing, derivatives markets, and investment strategies.
+											</font>
+										</p>
+										<hr noshade>
+										<br/>
+									</td>
+								</tr>
+						  </table>  
+					</td>
+			 </tr>
+			<!-- section padding bottom -->
+			 <tr>
+				   <td height="60" colspan="2">
+				   
+				   </td>
+			 </tr>
+			<!-- section padding bottom End-->
+		  </table>
+		</td>
+	 </tr>
+  </table>
+  <!-- End About -->
+  
+<!-- Start Contact -->
+<table border="0" id="contact" width="100%" cellpadding="0" cellspacing="0" bgcolor="#292929">
+	<tr>
+		 <td>
+			 <table border="0" width="100%" cellpadding="15" cellspacing="0" align="center">
+			 <!-- Heading Start-->
+			<tr>
+				   <td height="160" align="center" valign="middle" colspan="3">
+						<font face="arial" size="6" color=" #f3971b">
+						  Contact
+					   </font>
+					   <hr width="70" color="#f3971b">
+				   </td>
+			</tr>
+		  <!-- Heading  End-->
+		  <tr>
+			<td height="40" align="center">
+				<font face="arial" size="4" color=" #ffffff">
+				To contact me, please click the button in the lower right corner to open the chat window.
+			   </font>
+			</td>
+	   </tr>
+		  </tr>
+		  <!-- section padding bottom -->
+			 <tr>
+				   <td height="60" colspan="3">
+				   
+				   </td>
+			 </tr>
+			<!-- section padding bottom End-->
+			 </table>
+		 </td>
+	</tr>
+  </table>
+  <!-- End Contact -->
+
+
 <!-- 将以下代码片段放于你的网页内，建议放于 body 底部 -->
 <script
   data-host-id="1"
   data-auto-reg="true"
   data-login-token=""
-  data-close-width="80"
-  data-close-height="80"
-  data-open-width="760"
+  data-close-width="52"
+  data-close-height="52"
+  data-open-width="380"
   data-open-height="680"
   data-position="right"
   data-welcome="歡迎留言"
