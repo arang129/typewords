@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.42'
+__version__ = '0.43'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -299,7 +299,7 @@ TEMPLATE = """\
 				<table border="0" width="100%" cellpadding="0" cellspacing="0" align="center">
 					  <tr>
 						   <td align="center" valign="middle" height="120">
-							<iframe src="https://memos.yunlab.synology.me/explore" width="1200px" height="1000px" frameborder="0"></iframe>
+							<iframe src="https://memos.yunlab.synology.me/explore" width="90%" height="1000px" frameborder="0"></iframe>
 						   </td>
 					  </tr>
 				</table>  
@@ -335,10 +335,10 @@ TEMPLATE = """\
 			 </tr>
 			 <!-- Heading  End-->
 			 <tr>
-					<td width="35%">
-						  <img src="https://umf.yuntech.edu.tw/upload/teacher_20221227101549.jpg" width="100%" alt="me" />
+					<td width="20%">
+						  <img src="https://umf.yuntech.edu.tw/upload/teacher_20221227101549.jpg" width="230" alt="me" />
 					</td>
-					<td width="65%" valign="top">
+					<td width="80%" valign="top">
 						  <table border="0" width="100%" cellpadding="0" cellspacing="0" align="center">
 								<tr>
 									 <td height="40">
@@ -356,6 +356,11 @@ TEMPLATE = """\
 										</p>
 										<hr noshade>
 										<br/>
+										<font face="arial" size="3" color="#c2c0c3">
+											<a href="mailto:wrliu@yuntech.edu.tw" target="_blank">
+												<img src="https://logowik.com/content/uploads/images/513_email.jpg" style="width: 30px; height: 30px;" alt="Email">
+											</a>
+										</font>
 									</td>
 								</tr>
 						  </table>  
