@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "hello_jupyter_proxy"
+name = "nextweb"
 authors = [{name = "Thomas Kluyver", email = "thomas@kluyver.me.uk"}]
 readme = "README.rst"
 license = {file = "LICENSE"}
@@ -15,4 +15,4 @@ dynamic = ["version", "description"]
 Home = "https://github.com/takluyver/hello_jupyter_proxy"
 
 [project.entry-points.jupyter_serverproxy_servers]
-hello = "hello_jupyter_proxy:setup_hello"
+hello = "nextweb:setup_hello"
