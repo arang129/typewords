@@ -12,7 +12,7 @@ __version__ = '0.1'
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
 # https://jupyter-server-proxy.readthedocs.io/en/latest/server-process.html
-def setup_hello():
+def setup_nextweb():
     # Using a Unix socket prevents other users on a multi-user system from accessing
     # our server. The alternative is a TCP socket ('-p', '{port}').
     return {
