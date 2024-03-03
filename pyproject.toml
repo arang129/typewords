@@ -15,4 +15,4 @@ dynamic = ["version", "description"]
 Home = "https://github.com/takluyver/hello_jupyter_proxy"
 
 [project.entry-points.jupyter_serverproxy_servers]
-hello = "nextweb:setup_hello"
+hello = "nextweb:setup_nextweb"
