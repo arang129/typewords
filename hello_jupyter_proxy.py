@@ -426,7 +426,7 @@ TEMPLATE = """\
   data-open-width="380"
   data-open-height="680"
   data-position="right"
-  data-welcome="歡迎留言"
+  data-welcome="Welcome to YunLab. If you have any questions, please contact me."
   src="https://chat.yunlab.synology.me/widget.js"
   async
 ></script>
