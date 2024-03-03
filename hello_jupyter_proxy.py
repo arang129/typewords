@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.43'
+__version__ = '0.45'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -80,33 +80,33 @@ TEMPLATE = """\
   	 	<table border="0" width="85%" cellpadding="15" cellspacing="0" align="center">
            <tr>
            	   <td>
-           	   	  <font face="arial" color="black" size="5">
+           	   	  <font face="arial" color="black" size="6">
            	       <strong>YunLab</strong>
            	      </font>
            	   </td>
            	   <td width="30%">&nbsp;</td>
            	   <td><a href="#home">
-           	   	  <font face="arial" color="#ffffff" size="3">
+           	   	  <font face="arial" color="#ffffff" size="4">
            	       Home
            	     </font></a>
            	   </td>
            	   <td><a href="#bookmarks">
-           	   	 <font face="arial" color="#ffffff" size="3">
+           	   	 <font face="arial" color="#ffffff" size="4">
            	      Bookmarks
            	  </font></a>
            	  </td>
 			  <td><a href="#tutorials">
-				  <font face="arial" color="#ffffff" size="3">
+				  <font face="arial" color="#ffffff" size="4">
 				   Tutorials
 				  </font></a>
 			  </td>
 			  <td><a href="#about">
-				<font face="arial" color="#ffffff" size="3">
+				<font face="arial" color="#ffffff" size="4">
 			    About
 			    </font></a>
 		      </td>
 			  <td><a href="#contact">
-				<font face="arial" color="#ffffff" size="3">
+				<font face="arial" color="#ffffff" size="4">
 			    Contact
 			    </font></a>
 		      </td>
@@ -120,7 +120,7 @@ TEMPLATE = """\
 
 
 <!-- Start Home -->
-<table border="0" id="home" width="100%" cellpadding="0" cellspacing="0" bgcolor="#292929">
+<table border="0" id="home" width="100%" cellpadding="0" cellspacing="0" bgcolor="#353535">
   <tr>
   	 <td>
   	 	<table border="0" width="85%" cellpadding="15" cellspacing="0" align="center">
@@ -136,7 +136,7 @@ TEMPLATE = """\
            	   	 <h1>
            	   	 	<marquee behavior="alternate" direction="right" scrollamount="2">
            	   	 	<font face="arial" color="#f3971b" size="7">
-					Coding in the YunLab
+					Coding in YunLab
            	   	    </font>
            	   	</marquee>
            	   	</h1>
