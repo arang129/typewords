@@ -21,7 +21,7 @@ def setup_hello():
         'launcher_entry': {
             'enabled': True,
             'icon_path': '/opt/tljh/hub/share/jupyterhub/chatgpt.svg',
-            'title': 'YunLab',
+            'title': 'ChatGPT',
         },
     }
 
