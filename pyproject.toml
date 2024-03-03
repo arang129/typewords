@@ -12,7 +12,7 @@ dependencies = ["jupyter-server-proxy >=4.0"]  # v4 required for Unix socket sup
 dynamic = ["version", "description"]
 
 [project.urls]
-Home = "https://github.com/takluyver/hello_jupyter_proxy"
+Home = "https://github.com/arang129/nextweb"
 
 [project.entry-points.jupyter_serverproxy_servers]
 hello = "nextweb:setup_nextweb"
