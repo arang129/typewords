@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.12'
+__version__ = '0.13'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -20,7 +20,7 @@ def setup_nextweb():
         'unix_socket': True,
         'launcher_entry': {
             'enabled': True,
-            'icon_path': '/opt/tljh/hub/share/jupyterhub/chatgpt.svg',
+            'icon_path': '/opt/tljh/hub/share/jupyterhub/next.svg',
             'title': 'ChatGPT',
         },
     }
@@ -68,11 +68,11 @@ TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
-	<title>ChatGPT in YunLab</title>
+	<title>NextChat</title>
 </head>
  
 <body>
-<iframe src="https://chatgpt.yunlab.synology.me/" width="100%" height="850px" frameborder="0"></iframe>
+<iframe src="https://chatgpt.yunlab.synology.me/" width="100%" height="870px" frameborder="0"></iframe>
 </body>
 </html>
 """
