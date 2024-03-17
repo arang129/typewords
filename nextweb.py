@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.13'
+__version__ = '0.15'
 
 # This is the entry point for jupyter-server-proxy . The packaging metadata
 # tells it about this function. For details, see:
@@ -21,7 +21,7 @@ def setup_nextweb():
         'launcher_entry': {
             'enabled': True,
             'icon_path': '/opt/tljh/hub/share/jupyterhub/next.svg',
-            'title': 'ChatGPT',
+            'title': 'NextChat',
         },
     }
 
