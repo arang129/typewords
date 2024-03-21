@@ -68,7 +68,7 @@ TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Memos</title>
+	<title>Tutorials</title>
 </head>
  
 <body>
