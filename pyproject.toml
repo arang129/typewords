@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "voilaapp"
+name = "viewhtml"
 authors = [{name = "Thomas Kluyver", email = "thomas@kluyver.me.uk"}]
 readme = "README.rst"
 license = {file = "LICENSE"}
@@ -12,7 +12,7 @@ dependencies = ["jupyter-server-proxy >=4.0"]  # v4 required for Unix socket sup
 dynamic = ["version", "description"]
 
 [project.urls]
-Home = "https://github.com/arang129/voilaapp"
+Home = "https://github.com/arang129/viewhtml"
 
 [project.entry-points.jupyter_serverproxy_servers]
-voilaapp = "voilaapp:setup_voilaapp"
+viewhtml = "viewhtml:setup_viewhtml"
