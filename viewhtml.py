@@ -13,6 +13,11 @@ def setup_viewhtml():
     return {
         'command': [sys.executable, '-m', 'viewhtml', '-u', '{unix_socket}'],
         'unix_socket': True,
+        'launcher_entry': {
+            'enabled': True,
+            'icon_path': '/opt/tljh/hub/share/jupyterhub/derivatives.svg',
+            'title': '上課講義',
+        },
     }
 
 # 可以自訂你的首頁目錄連結 HTML
