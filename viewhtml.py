@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.22'
+__version__ = '0.23'
 
 def setup_viewhtml():
     return {
@@ -32,6 +32,7 @@ INDEX_HTML = """\
 <body>
     <h1>我的範例目錄</h1>
     <ul>
+        <li><a href="markdown">0. Markdown語法</a></li>
         <li><a href="python">1. Python基本運算</a></li>
         <li><a href="string">2. 字串</a></li>
     </ul>
@@ -66,12 +67,15 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         elif self.path == '/python':
             # 讀取並顯示 /home/jupyter-arang/[無解答] Python基本運算.html
-            self._serve_local_file("/home/jupyter-arang/[無解答] Python基本運算.html")
+            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] Python基本運算.html")
 
         elif self.path == '/string':
             # 讀取並顯示 /home/jupyter-arang/[無解答] 字串.html
-            self._serve_local_file("/home/jupyter-arang/[無解答] 字串.html")
+            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] 字串.html")
 
+        elif self.path == '/markdown':
+            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/不存在.html")
+        
         else:
             # 其他路徑：回傳 404
             self._send_not_found()
