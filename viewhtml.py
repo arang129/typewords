@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.26'
+__version__ = '0.01'
 
 def setup_viewhtml():
     return {
