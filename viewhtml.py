@@ -7,11 +7,11 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.21'
+__version__ = '0.22'
 
 def setup_viewhtml():
     return {
-        'command': [sys.executable, '-m', 'viewhtml_jupyter_proxy', '-u', '{unix_socket}'],
+        'command': [sys.executable, '-m', 'viewhtml', '-u', '{unix_socket}'],
         'unix_socket': True,
         'launcher_entry': {
             'enabled': True,
