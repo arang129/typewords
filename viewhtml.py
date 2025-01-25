@@ -7,11 +7,11 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.01'
+__version__ = '0.21'
 
 def setup_viewhtml():
     return {
-        'command': [sys.executable, '-m', 'viewhtml', '-u', '{unix_socket}'],
+        'command': [sys.executable, '-m', 'viewhtml_jupyter_proxy', '-u', '{unix_socket}'],
         'unix_socket': True,
         'launcher_entry': {
             'enabled': True,
@@ -20,7 +20,8 @@ def setup_viewhtml():
         },
     }
 
-# 可以自訂你的首頁目錄連結 HTML
+# 首頁目錄的 HTML
+# 注意：href="python" 與 href="string" 皆為相對路徑（沒有以 "/" 開頭）
 INDEX_HTML = """\
 <!DOCTYPE html>
 <html>
@@ -31,14 +32,14 @@ INDEX_HTML = """\
 <body>
     <h1>我的範例目錄</h1>
     <ul>
-        <li><a href="/python">1. Python基本運算</a></li>
-        <li><a href="/string">2. 字串</a></li>
+        <li><a href="python">1. Python基本運算</a></li>
+        <li><a href="string">2. 字串</a></li>
     </ul>
 </body>
 </html>
 """
 
-# 自訂 404 頁面（若有需要）
+# 404 頁面（若找不到路徑或檔案）
 NOT_FOUND_HTML = """\
 <!DOCTYPE html>
 <html>
@@ -48,34 +49,36 @@ NOT_FOUND_HTML = """\
 </head>
 <body>
     <h2>404 - Not Found</h2>
-    <p>您請求的頁面不存在！</p>
+    <p>您請求的頁面不存在或檔案不存在！</p>
 </body>
 </html>
 """
 
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # 針對不同路徑做對應
+        """
+        依據 path 分派對應的動作。
+        """
         if self.path == '/':
-            # 首頁：顯示目錄連結
+            # 首頁：顯示目錄
             self._send_ok_headers()
             self.wfile.write(INDEX_HTML.encode('utf-8'))
 
         elif self.path == '/python':
-            # 讀取 Python基本運算.html
+            # 讀取並顯示 /home/jupyter-arang/[無解答] Python基本運算.html
             self._serve_local_file("/home/jupyter-arang/[無解答] Python基本運算.html")
 
         elif self.path == '/string':
-            # 讀取 字串.html
+            # 讀取並顯示 /home/jupyter-arang/[無解答] 字串.html
             self._serve_local_file("/home/jupyter-arang/[無解答] 字串.html")
 
         else:
-            # 其餘路徑：回傳 404
+            # 其他路徑：回傳 404
             self._send_not_found()
 
     def _serve_local_file(self, filepath):
         """
-        嘗試讀取本機檔案並回傳內容，若失敗則回傳 404。
+        嘗試讀取本機檔案並回傳內容；若找不到則回傳 404。
         """
         try:
             with open(filepath, 'rb') as f:
@@ -99,7 +102,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(NOT_FOUND_HTML.encode('utf-8'))
 
     def address_string(self):
-        # 修正當使用 Unix Socket 時的 logging 顯示
+        """修正當使用 Unix Socket 時的 logging 顯示"""
         if isinstance(self.client_address, str):
             return self.client_address
         return super().address_string()
