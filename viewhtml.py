@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.23'
+__version__ = '0.24'
 
 def setup_viewhtml():
     return {
@@ -74,7 +74,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] 字串.html")
 
         elif self.path == '/markdown':
-            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/不存在.html")
+            # 回傳 PDF：/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] Markdown簡介.pdf
+            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] Markdown簡介.pdf")
         
         else:
             # 其他路徑：回傳 404
@@ -83,15 +84,29 @@ class RequestHandler(BaseHTTPRequestHandler):
     def _serve_local_file(self, filepath):
         """
         嘗試讀取本機檔案並回傳內容；若找不到則回傳 404。
+        同時自動偵測 MIME Type，避免 PDF、圖片等格式顯示錯誤。
         """
         try:
             with open(filepath, 'rb') as f:
                 content = f.read()
-            self._send_ok_headers()
+            # 嘗試根據檔名判定 MIME Type
+            mime_type, _ = mimetypes.guess_type(filepath)
+            if not mime_type:
+                # 若判定失敗，就給一個預設
+                mime_type = "application/octet-stream"
+
+            # 回傳 200
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            # 如果想確定 PDF 直接在瀏覽器開啟，可視情況加上 Content-Disposition:inline
+            # self.send_header('Content-Disposition', 'inline')
+            self.end_headers()
+
+            # 寫出檔案內容
             self.wfile.write(content)
         except FileNotFoundError:
             self._send_not_found()
-
+            
     def _send_ok_headers(self):
         """回傳 200 狀態碼和基本 header"""
         self.send_response(200)
