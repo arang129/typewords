@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.25'
+__version__ = '0.26'
 
 def setup_viewhtml():
     return {
@@ -74,8 +74,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] 字串.html")
 
         elif self.path == '/markdown':
-            # 回傳 PDF：/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] Markdown簡介.pdf
-            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/[無解答] Markdown簡介.pdf")
+            self._serve_local_file("/opt/tljh/hub/share/jupyterhub/tutorials/計算機應用/不存在.html")
         
         else:
             # 其他路徑：回傳 404
@@ -84,42 +83,15 @@ class RequestHandler(BaseHTTPRequestHandler):
     def _serve_local_file(self, filepath):
         """
         嘗試讀取本機檔案並回傳內容；若找不到則回傳 404。
-        同時自動偵測 MIME Type，避免 PDF、圖片等格式顯示錯誤。
         """
         try:
             with open(filepath, 'rb') as f:
                 content = f.read()
-    
-            # 若檔案是空的，也可能導致瀏覽器出現問題
-            if not content:
-                self._send_not_found()
-                return
-    
-            # 自動偵測 MIME Type
-            mime_type, _ = mimetypes.guess_type(filepath)
-            if not mime_type:
-                mime_type = "application/octet-stream"
-    
-            self.send_response(200)
-            self.send_header('Content-Type', mime_type)
-            self.send_header('Content-Length', str(len(content)))
-    
-            # 若要在瀏覽器裡直接開啟 PDF，可嘗試:
-            # self.send_header('Content-Disposition', 'inline')
-    
-            self.end_headers()
-    
+            self._send_ok_headers()
             self.wfile.write(content)
-    
         except FileNotFoundError:
             self._send_not_found()
-        except PermissionError:
-            self._send_not_found()
-        except Exception as e:
-            # 若有其他未知錯誤，可選擇印出 debug 訊息
-            # print("Error serving file:", e)
-            self._send_not_found()
-            
+
     def _send_ok_headers(self):
         """回傳 200 狀態碼和基本 header"""
         self.send_response(200)
