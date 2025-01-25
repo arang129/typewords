@@ -7,7 +7,7 @@ from copy import copy
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-__version__ = '0.24'
+__version__ = '0.25'
 
 def setup_viewhtml():
     return {
@@ -89,22 +89,35 @@ class RequestHandler(BaseHTTPRequestHandler):
         try:
             with open(filepath, 'rb') as f:
                 content = f.read()
-            # 嘗試根據檔名判定 MIME Type
+    
+            # 若檔案是空的，也可能導致瀏覽器出現問題
+            if not content:
+                self._send_not_found()
+                return
+    
+            # 自動偵測 MIME Type
             mime_type, _ = mimetypes.guess_type(filepath)
             if not mime_type:
-                # 若判定失敗，就給一個預設
                 mime_type = "application/octet-stream"
-
-            # 回傳 200
+    
             self.send_response(200)
             self.send_header('Content-Type', mime_type)
-            # 如果想確定 PDF 直接在瀏覽器開啟，可視情況加上 Content-Disposition:inline
+            self.send_header('Content-Length', str(len(content)))
+    
+            # 若要在瀏覽器裡直接開啟 PDF，可嘗試:
             # self.send_header('Content-Disposition', 'inline')
+    
             self.end_headers()
-
-            # 寫出檔案內容
+    
             self.wfile.write(content)
+    
         except FileNotFoundError:
+            self._send_not_found()
+        except PermissionError:
+            self._send_not_found()
+        except Exception as e:
+            # 若有其他未知錯誤，可選擇印出 debug 訊息
+            # print("Error serving file:", e)
             self._send_not_found()
             
     def _send_ok_headers(self):
