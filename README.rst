@@ -9,6 +9,8 @@ To try it, install this package into the same Python environment which is
 used to launch your single-user server::
 
     pip install git+https://github.com/arang129/viewhtml.git
+    pip install --upgrade git+https://github.com/arang129/viewhtml.git
+    pip uninstall git+https://github.com/arang129/viewhtml.git
 
 If your server is already running use the JupyterHub control panel
 (``/hub/home``) to stop and start it. You should have a new 'hello' option in
