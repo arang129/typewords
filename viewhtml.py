@@ -14,7 +14,7 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.03'
+__version__ = '0.04'
 
 # 設定路徑
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
@@ -29,6 +29,13 @@ def setup_viewhtml():
             'icon_path': '/opt/tljh/hub/share/jupyterhub/derivatives.svg',
             'title': '上課講義',
         },
+        'environment': {
+            'JUPYTERHUB_USER': '{JUPYTERHUB_USER}',
+            'JUPYTERHUB_SERVICE_PREFIX': '{JUPYTERHUB_SERVICE_PREFIX}',
+            'USER': '{USER}',
+            'JUPYTER_RUNTIME_DIR': '{JUPYTER_RUNTIME_DIR}',
+        },
+        'absolute_url': False,
     }
 
 class CourseNotesHandler:
@@ -46,20 +53,62 @@ class CourseNotesHandler:
     
     def detect_username(self):
         """偵測使用者名稱"""
-        # 優先使用環境變數
+        # 方法 1: 從環境變數
         username = os.environ.get('JUPYTERHUB_USER')
         if username:
             print(f"Debug - Found username from JUPYTERHUB_USER: {username}")
             return username
         
-        # 備用方案：從路徑偵測
+        # 方法 2: 從 USER 環境變數
+        username = os.environ.get('USER')
+        if username and username.startswith('jupyter-'):
+            username = username.replace('jupyter-', '')
+            print(f"Debug - Found username from USER env: {username}")
+            return username
+        
+        # 方法 3: 從服務前綴路徑
+        service_prefix = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
+        if service_prefix:
+            # 通常格式為 /user/username/proxy/...
+            parts = service_prefix.strip('/').split('/')
+            if len(parts) >= 2 and parts[0] == 'user':
+                username = parts[1]
+                print(f"Debug - Found username from service prefix: {username}")
+                return username
+        
+        # 方法 4: 從當前工作目錄
         current_dir = os.getcwd()
         print(f"Debug - Current directory: {current_dir}")
+        
+        # 檢查 /home/jupyter-username 格式
+        if '/home/jupyter-' in current_dir:
+            match = re.search(r'/home/jupyter-([^/]+)', current_dir)
+            if match:
+                username = match.group(1)
+                print(f"Debug - Found username from home path: {username}")
+                return username
+        
+        # 方法 5: 從路徑段落
         for seg in current_dir.split(os.sep):
             if seg.startswith("jupyter-"):
                 username = seg.replace("jupyter-", "")
-                print(f"Debug - Found username from path: {username}")
+                print(f"Debug - Found username from path segment: {username}")
                 return username
+        
+        # 方法 6: 從 JUPYTER_RUNTIME_DIR
+        runtime_dir = os.environ.get('JUPYTER_RUNTIME_DIR', '')
+        if 'jupyter-' in runtime_dir:
+            match = re.search(r'jupyter-([^/]+)', runtime_dir)
+            if match:
+                username = match.group(1)
+                print(f"Debug - Found username from runtime dir: {username}")
+                return username
+        
+        # 列出所有環境變數以便除錯
+        print("Debug - All environment variables:")
+        for key, value in os.environ.items():
+            if 'JUPYTER' in key or 'USER' in key or 'HOME' in key:
+                print(f"  {key}: {value}")
         
         print("Debug - No username found")
         return None
@@ -242,6 +291,28 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = parsed_path.path
         query_params = parse_qs(parsed_path.query)
         
+        # 處理 jupyter-server-proxy 的路徑前綴
+        # 移除可能的前綴如 /user/username/proxy/PORT/
+        if path.startswith('/user/'):
+            # 提取使用者名稱
+            path_parts = path.strip('/').split('/')
+            if len(path_parts) >= 2:
+                potential_username = path_parts[1]
+                if not os.environ.get('JUPYTERHUB_USER'):
+                    os.environ['JUPYTERHUB_USER'] = potential_username
+                    print(f"Debug - Set JUPYTERHUB_USER from path: {potential_username}")
+            
+            # 找到實際的路徑
+            proxy_index = path.find('/proxy/')
+            if proxy_index != -1:
+                after_proxy = path[proxy_index + 7:]  # 7 = len('/proxy/')
+                slash_index = after_proxy.find('/')
+                if slash_index != -1:
+                    path = after_proxy[slash_index:]
+                else:
+                    path = '/'
+        
+        # 正常的路由處理
         if path == '/':
             self._serve_main_page()
         elif path == '/api/courses':
