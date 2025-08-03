@@ -14,7 +14,7 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.0.5'
+__version__ = '0.0.1'
 
 # --- 設定路徑 ---
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
