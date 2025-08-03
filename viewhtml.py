@@ -1,8 +1,3 @@
-了解了，問題是 jupyter-server-proxy 的路徑代理問題。當透過 JupyterHub proxy 存取時，API 路徑需要包含正確的前綴。讓我修正程式碼：
-
-```python
-"""A comprehensive course notes viewer server with jupyter-server-proxy
-"""
 import argparse
 import socket
 import sys
