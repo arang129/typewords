@@ -14,7 +14,7 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.08'
+__version__ = '0.09'
 
 # 設定路徑
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
@@ -60,37 +60,30 @@ class CourseNotesHandler:
     def get_user_course(self, username):
         """根據使用者名稱取得課程"""
         if not os.path.isfile(CSV_PATH):
-            print(f"CSV file not found: {CSV_PATH}")
             return "Reference"
         
         try:
             df = pd.read_csv(CSV_PATH)
             matched = df[df["username"] == username]
             return matched.iloc[0]["course"] if not matched.empty else "Reference"
-        except Exception as e:
-            print(f"Error reading CSV: {e}")
+        except:
             return "Reference"
     
     def get_available_courses(self, course_name):
         """取得使用者可存取的課程列表"""
         if not os.path.isdir(ALL_COURSES_ROOT):
-            print(f"Courses root directory not found: {ALL_COURSES_ROOT}")
             return []
         
-        try:
-            all_folders = [d for d in os.listdir(ALL_COURSES_ROOT) 
-                          if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) 
-                          and not d.startswith(".")]
-            
-            if course_name == "all":
-                return sorted(all_folders)
-            elif course_name.lower() == "research":
-                return sorted([d for d in ("Reference", "Research") if d in all_folders])
-            else:
-                return sorted([d for d in ("Reference", course_name) if d in all_folders])
-        except Exception as e:
-            print(f"Error getting courses: {e}")
-            return []
+        all_folders = [d for d in os.listdir(ALL_COURSES_ROOT) 
+                      if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) 
+                      and not d.startswith(".")]
+        
+        if course_name == "all":
+            return sorted(all_folders)
+        elif course_name.lower() == "research":
+            return sorted([d for d in ("Reference", "Research") if d in all_folders])
+        else:
+            return sorted([d for d in ("Reference", course_name) if d in all_folders])
     
     def get_date_folders(self, course_path):
         """取得課程下的日期資料夾"""
@@ -132,7 +125,7 @@ class CourseNotesHandler:
     
     def enhance_html_with_math(self, html_content):
         """增強 HTML 內容，處理數學公式和連結"""
-        # 處理外部連結 - 使用原始字串避免跳脫問題
+        # 處理外部連結
         regex = re.compile(r'(?i)(<a\s+(?:[^>]*?\s+)?href=(?:"|\')https?://[^>]+)((?!.*\btarget\s*=)[^>]*>)')
         html_content = regex.sub(r'\1 target="_blank" rel="noopener noreferrer"\2', html_content)
         
@@ -219,19 +212,15 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = parsed_path.path
         query_params = parse_qs(parsed_path.query)
         
-        # 除錯訊息
-        print(f"Request path: {path}")
-        print(f"Request headers: {dict(self.headers)}")
-        
-        if path == '/' or path == '':
+        if path == '/':
             self._serve_main_page()
-        elif path.endswith('/api/courses'):
+        elif path == '/api/courses':
             self._serve_courses_api()
-        elif path.endswith('/api/folders'):
+        elif path == '/api/folders':
             self._serve_folders_api(query_params)
-        elif path.endswith('/api/files'):
+        elif path == '/api/files':
             self._serve_files_api(query_params)
-        elif path.endswith('/view'):
+        elif path == '/view':
             self._serve_file_viewer(query_params)
         else:
             self._send_not_found()
@@ -344,8 +333,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             border-radius: 5px;
             font-size: 12px;
             color: #333;
-            max-height: 200px;
-            overflow-y: auto;
         }}
     </style>
 </head>
@@ -403,67 +390,23 @@ class RequestHandler(BaseHTTPRequestHandler):
             const debugPanel = document.getElementById('debug-panel');
             const debugContent = document.getElementById('debug-content');
             debugPanel.style.display = 'block';
-            const timestamp = new Date().toLocaleTimeString();
-            debugContent.innerHTML += `<br>[${{timestamp}}] ${{message}}`;
-            // 自動捲動到底部
-            debugContent.scrollTop = debugContent.scrollHeight;
-        }}
-        
-        // 取得正確的基礎路徑
-        function getBasePath() {{
-            // 從當前網址推斷基礎路徑
-            const pathname = window.location.pathname;
-            let basePath = '';
-            
-            // 檢查是否透過 JupyterHub proxy 存取
-            if (pathname.includes('/user/') && pathname.includes('/proxy/')) {{
-                // 例如: /user/username/proxy/8080/
-                const match = pathname.match(/(\/user\/[^\/]+\/proxy\/\d+)/);
-                if (match) {{
-                    basePath = match[1];
-                }}
-            }} else if (pathname.includes('/user/') && pathname.includes('/viewhtml/')) {{
-                // 例如: /user/username/viewhtml/
-                const match = pathname.match(/(\/user\/[^\/]+\/viewhtml)/);
-                if (match) {{
-                    basePath = match[1];
-                }}
-            }}
-            
-            showDebug('Current pathname: ' + pathname);
-            showDebug('Detected base path: ' + basePath);
-            return basePath;
-        }}
-        
-        // 構建 API URL
-        function apiUrl(endpoint) {{
-            const basePath = getBasePath();
-            return basePath + endpoint;
+            debugContent.innerHTML += '<br>' + message;
         }}
         
         // 載入可用課程
         async function loadCourses() {{
             try {{
                 showDebug('開始載入課程...');
-                const url = apiUrl('/api/courses');
-                showDebug('API URL: ' + url);
-                
-                const response = await fetch(url);
+                const response = await fetch('/api/courses');
                 showDebug('API 回應狀態: ' + response.status);
-                showDebug('API 回應 headers: ' + JSON.stringify(Object.fromEntries(response.headers)));
                 
                 if (!response.ok) {{
-                    const text = await response.text();
-                    showDebug('API 錯誤回應: ' + text);
                     throw new Error('HTTP error! status: ' + response.status);
                 }}
                 
-                const data = await response.json();
-                showDebug('收到資料: ' + JSON.stringify(data));
-                
-                // 確保 data 是陣列
-                const courses = Array.isArray(data) ? data : [];
-                showDebug('課程數量: ' + courses.length);
+                const courses = await response.json();
+                showDebug('收到課程數量: ' + courses.length);
+                showDebug('課程列表: ' + JSON.stringify(courses));
                 
                 const select = document.getElementById('course-select');
                 select.innerHTML = '<option value="">(請選擇課程)</option>';
@@ -474,14 +417,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                     option.textContent = course;
                     select.appendChild(option);
                 }});
-                
-                if (courses.length === 0) {{
-                    showDebug('警告：沒有找到任何課程');
-                }}
             }} catch (error) {{
                 console.error('載入課程失敗:', error);
                 showDebug('載入課程錯誤: ' + error.message);
-                showDebug('錯誤 stack: ' + error.stack);
             }}
         }}
         
@@ -501,8 +439,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             
             try {{
                 showDebug('載入資料夾 for course: ' + currentCourse);
-                const url = apiUrl(`/api/folders?course=${{encodeURIComponent(currentCourse)}}`);
-                const response = await fetch(url);
+                const response = await fetch(`/api/folders?course=${{encodeURIComponent(currentCourse)}}`);
                 const folders = await response.json();
                 showDebug('收到資料夾數量: ' + folders.length);
                 
@@ -536,8 +473,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             }}
             
             try {{
-                const url = apiUrl(`/api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
-                const response = await fetch(url);
+                const response = await fetch(`/api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
                 const files = await response.json();
                 
                 fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
@@ -555,7 +491,6 @@ class RequestHandler(BaseHTTPRequestHandler):
                 }}
             }} catch (error) {{
                 console.error('載入檔案失敗:', error);
-                showDebug('載入檔案錯誤: ' + error.message);
             }}
         }}
         
@@ -567,16 +502,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             if (!fileName) return;
             
             const contentArea = document.getElementById('content-area');
-            const viewUrl = apiUrl(`/view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`);
+            const viewUrl = `/view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`;
             
             contentArea.innerHTML = `<iframe src="${{viewUrl}}" frameborder="0"></iframe>`;
         }}
         
         // 初始化
-        window.addEventListener('DOMContentLoaded', function() {{
-            showDebug('頁面載入完成，開始初始化...');
-            loadCourses();
-        }});
+        loadCourses();
     </script>
 </body>
 </html>
@@ -593,6 +525,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         print(f"API /api/courses - Username: {username}")
         print(f"API /api/courses - Course Name: {course_name}")
         print(f"API /api/courses - Available Courses: {courses}")
+        print(f"API /api/courses - Courses Root: {ALL_COURSES_ROOT}")
+        print(f"API /api/courses - Root exists: {os.path.isdir(ALL_COURSES_ROOT)}")
+        
+        if os.path.isdir(ALL_COURSES_ROOT):
+            all_dirs = os.listdir(ALL_COURSES_ROOT)
+            print(f"API /api/courses - All directories: {all_dirs}")
+            valid_dirs = [d for d in all_dirs if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) and not d.startswith(".")]
+            print(f"API /api/courses - Valid directories: {valid_dirs}")
         
         self._send_json(courses)
     
@@ -605,11 +545,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         course_path = os.path.join(ALL_COURSES_ROOT, course)
         folders = self.notes_handler.get_date_folders(course_path)
-        
-        print(f"API /api/folders - Course: {course}")
-        print(f"API /api/folders - Course path: {course_path}")
-        print(f"API /api/folders - Folders: {folders}")
-        
         self._send_json(folders)
     
     def _serve_files_api(self, query_params):
@@ -625,10 +560,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         username = self.notes_handler.detect_username()
         course_name = self.notes_handler.get_user_course(username) if username else "Reference"
         files = self.notes_handler.get_preview_files(folder_path, course_name)
-        
-        print(f"API /api/files - Course: {course}, Folder: {folder}")
-        print(f"API /api/files - Files: {files}")
-        
         self._send_json(files)
     
     def _serve_file_viewer(self, query_params):
@@ -662,7 +593,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Markdown 檔案
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            # 簡單的 Markdown 轉 HTML
+            # 簡單的 Markdown 轉 HTML（實際應用中可能需要更完整的轉換）
             html = f"""
 <!DOCTYPE html>
 <html>
@@ -692,7 +623,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         """發送 HTML 回應"""
         self.send_response(200)
         self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.send_header('Cache-Control', 'no-cache')
         self.end_headers()
         self.wfile.write(content.encode('utf-8'))
     
@@ -700,8 +630,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         """發送 JSON 回應"""
         self.send_response(200)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Cache-Control', 'no-cache')
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
     
@@ -743,11 +671,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         """發送 404 頁面"""
         self._send_error("頁面不存在")
     
-    def log_message(self, format, *args):
-        """覆寫 log_message 以加入除錯資訊"""
-        message = format % args
-        print(f"{self.log_date_time_string()} - {self.address_string()} - {message}")
-    
     def address_string(self):
         """修正 Unix Socket 的 logging 顯示"""
         if isinstance(self.client_address, str):
@@ -763,9 +686,17 @@ def main():
     ap.add_argument('-u', '--unix-socket')
     args = ap.parse_args()
 
-    # 確保必要的目錄存在
-    if not os.path.exists(ALL_COURSES_ROOT):
-        print(f"Warning: Courses root directory does not exist: {ALL_COURSES_ROOT}")
-        print("Creating directory...")
-        try:
-            os.makedirs(ALL_COURSES_ROOT, exist_ok=True)
+    if args.unix_socket:
+        print("Unix server at", repr(args.unix_socket))
+        Path(args.unix_socket).unlink(missing_ok=True)
+        httpd = HTTPUnixServer(args.unix_socket, RequestHandler)
+    else:
+        # 127.0.0.1 = localhost: only accept connections from the same machine
+        print("TCP server on port", int(args.port))
+        httpd = HTTPServer(('127.0.0.1', int(args.port)), RequestHandler)
+
+    print("Launching course notes HTTP server")
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    main()
