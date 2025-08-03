@@ -14,7 +14,7 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.04'
+__version__ = '0.05'
 
 # 設定路徑
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
@@ -29,13 +29,6 @@ def setup_viewhtml():
             'icon_path': '/opt/tljh/hub/share/jupyterhub/derivatives.svg',
             'title': '上課講義',
         },
-        'environment': {
-            'JUPYTERHUB_USER': '{JUPYTERHUB_USER}',
-            'JUPYTERHUB_SERVICE_PREFIX': '{JUPYTERHUB_SERVICE_PREFIX}',
-            'USER': '{USER}',
-            'JUPYTER_RUNTIME_DIR': '{JUPYTER_RUNTIME_DIR}',
-        },
-        'absolute_url': False,
     }
 
 class CourseNotesHandler:
@@ -53,116 +46,44 @@ class CourseNotesHandler:
     
     def detect_username(self):
         """偵測使用者名稱"""
-        # 方法 1: 從環境變數
         username = os.environ.get('JUPYTERHUB_USER')
         if username:
-            print(f"Debug - Found username from JUPYTERHUB_USER: {username}")
             return username
         
-        # 方法 2: 從 USER 環境變數
-        username = os.environ.get('USER')
-        if username and username.startswith('jupyter-'):
-            username = username.replace('jupyter-', '')
-            print(f"Debug - Found username from USER env: {username}")
-            return username
-        
-        # 方法 3: 從服務前綴路徑
-        service_prefix = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
-        if service_prefix:
-            # 通常格式為 /user/username/proxy/...
-            parts = service_prefix.strip('/').split('/')
-            if len(parts) >= 2 and parts[0] == 'user':
-                username = parts[1]
-                print(f"Debug - Found username from service prefix: {username}")
-                return username
-        
-        # 方法 4: 從當前工作目錄
+        # 備用方案：從路徑偵測
         current_dir = os.getcwd()
-        print(f"Debug - Current directory: {current_dir}")
-        
-        # 檢查 /home/jupyter-username 格式
-        if '/home/jupyter-' in current_dir:
-            match = re.search(r'/home/jupyter-([^/]+)', current_dir)
-            if match:
-                username = match.group(1)
-                print(f"Debug - Found username from home path: {username}")
-                return username
-        
-        # 方法 5: 從路徑段落
         for seg in current_dir.split(os.sep):
             if seg.startswith("jupyter-"):
-                username = seg.replace("jupyter-", "")
-                print(f"Debug - Found username from path segment: {username}")
-                return username
-        
-        # 方法 6: 從 JUPYTER_RUNTIME_DIR
-        runtime_dir = os.environ.get('JUPYTER_RUNTIME_DIR', '')
-        if 'jupyter-' in runtime_dir:
-            match = re.search(r'jupyter-([^/]+)', runtime_dir)
-            if match:
-                username = match.group(1)
-                print(f"Debug - Found username from runtime dir: {username}")
-                return username
-        
-        # 列出所有環境變數以便除錯
-        print("Debug - All environment variables:")
-        for key, value in os.environ.items():
-            if 'JUPYTER' in key or 'USER' in key or 'HOME' in key:
-                print(f"  {key}: {value}")
-        
-        print("Debug - No username found")
+                return seg.replace("jupyter-", "")
         return None
     
     def get_user_course(self, username):
         """根據使用者名稱取得課程"""
         if not os.path.isfile(CSV_PATH):
-            print(f"Debug - CSV file not found at: {CSV_PATH}")
             return "Reference"
         
         try:
             df = pd.read_csv(CSV_PATH)
-            print(f"Debug - CSV loaded successfully, shape: {df.shape}")
-            print(f"Debug - Columns: {df.columns.tolist()}")
-            
             matched = df[df["username"] == username]
-            if not matched.empty:
-                course = matched.iloc[0]["course"]
-                print(f"Debug - Found course for {username}: {course}")
-                return course
-            else:
-                print(f"Debug - No match found for username: {username}")
-                return "Reference"
-        except Exception as e:
-            print(f"Debug - Error reading CSV: {e}")
+            return matched.iloc[0]["course"] if not matched.empty else "Reference"
+        except:
             return "Reference"
     
     def get_available_courses(self, course_name):
         """取得使用者可存取的課程列表"""
         if not os.path.isdir(ALL_COURSES_ROOT):
-            print(f"Debug - Courses root directory not found: {ALL_COURSES_ROOT}")
             return []
         
         all_folders = [d for d in os.listdir(ALL_COURSES_ROOT) 
                       if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) 
                       and not d.startswith(".")]
         
-        print(f"Debug - All folders in courses root: {all_folders}")
-        print(f"Debug - User course_name: {course_name}")
-        
         if course_name == "all":
-            result = sorted(all_folders)
+            return sorted(all_folders)
         elif course_name.lower() == "research":
-            # Research 權限可以看 Reference 和 Research
-            result = sorted([d for d in all_folders if d in ["Reference", "Research"]])
+            return sorted([d for d in ("Reference", "Research") if d in all_folders])
         else:
-            # 一般使用者可以看 Reference 和自己的課程
-            possible = ["Reference"]
-            if course_name in all_folders:
-                possible.append(course_name)
-            result = sorted(possible)
-        
-        print(f"Debug - Available courses for user: {result}")
-        return result
+            return sorted([d for d in ("Reference", course_name) if d in all_folders])
     
     def get_date_folders(self, course_path):
         """取得課程下的日期資料夾"""
@@ -291,28 +212,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = parsed_path.path
         query_params = parse_qs(parsed_path.query)
         
-        # 處理 jupyter-server-proxy 的路徑前綴
-        # 移除可能的前綴如 /user/username/proxy/PORT/
-        if path.startswith('/user/'):
-            # 提取使用者名稱
-            path_parts = path.strip('/').split('/')
-            if len(path_parts) >= 2:
-                potential_username = path_parts[1]
-                if not os.environ.get('JUPYTERHUB_USER'):
-                    os.environ['JUPYTERHUB_USER'] = potential_username
-                    print(f"Debug - Set JUPYTERHUB_USER from path: {potential_username}")
-            
-            # 找到實際的路徑
-            proxy_index = path.find('/proxy/')
-            if proxy_index != -1:
-                after_proxy = path[proxy_index + 7:]  # 7 = len('/proxy/')
-                slash_index = after_proxy.find('/')
-                if slash_index != -1:
-                    path = after_proxy[slash_index:]
-                else:
-                    path = '/'
-        
-        # 正常的路由處理
         if path == '/':
             self._serve_main_page()
         elif path == '/api/courses':
@@ -330,6 +229,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         """主頁面"""
         username = self.notes_handler.detect_username()
         course_name = self.notes_handler.get_user_course(username) if username else "Reference"
+        
+        # 加入除錯資訊
+        print(f"Main page - Username: {username}, Course: {course_name}")
         
         html = f"""
 <!DOCTYPE html>
@@ -424,6 +326,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             background-color: #fadbd8;
             border-radius: 5px;
         }}
+        .debug-info {{
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #333;
+        }}
     </style>
 </head>
 <body>
@@ -454,6 +364,11 @@ class RequestHandler(BaseHTTPRequestHandler):
             <select id="file-select" onchange="viewFile()" disabled>
                 <option value="">(請選擇檔案)</option>
             </select>
+            
+            <div id="debug-panel" class="debug-info" style="display: none;">
+                <strong>除錯資訊：</strong>
+                <div id="debug-content"></div>
+            </div>
         </div>
         
         <div class="main-content">
@@ -470,11 +385,28 @@ class RequestHandler(BaseHTTPRequestHandler):
         let currentCourse = '';
         let currentFolder = '';
         
+        // 顯示除錯資訊
+        function showDebug(message) {{
+            const debugPanel = document.getElementById('debug-panel');
+            const debugContent = document.getElementById('debug-content');
+            debugPanel.style.display = 'block';
+            debugContent.innerHTML += '<br>' + message;
+        }}
+        
         // 載入可用課程
         async function loadCourses() {{
             try {{
+                showDebug('開始載入課程...');
                 const response = await fetch('/api/courses');
+                showDebug('API 回應狀態: ' + response.status);
+                
+                if (!response.ok) {{
+                    throw new Error('HTTP error! status: ' + response.status);
+                }}
+                
                 const courses = await response.json();
+                showDebug('收到課程數量: ' + courses.length);
+                showDebug('課程列表: ' + JSON.stringify(courses));
                 
                 const select = document.getElementById('course-select');
                 select.innerHTML = '<option value="">(請選擇課程)</option>';
@@ -487,6 +419,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 }});
             }} catch (error) {{
                 console.error('載入課程失敗:', error);
+                showDebug('載入課程錯誤: ' + error.message);
             }}
         }}
         
@@ -505,8 +438,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             }}
             
             try {{
+                showDebug('載入資料夾 for course: ' + currentCourse);
                 const response = await fetch(`/api/folders?course=${{encodeURIComponent(currentCourse)}}`);
                 const folders = await response.json();
+                showDebug('收到資料夾數量: ' + folders.length);
                 
                 folderSelect.innerHTML = '<option value="">(請選擇資料夾)</option>';
                 folders.forEach(folder => {{
@@ -521,6 +456,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
             }} catch (error) {{
                 console.error('載入資料夾失敗:', error);
+                showDebug('載入資料夾錯誤: ' + error.message);
             }}
         }}
         
@@ -586,12 +522,17 @@ class RequestHandler(BaseHTTPRequestHandler):
         courses = self.notes_handler.get_available_courses(course_name)
         
         # 除錯訊息
-        print(f"Debug - Username: {username}")
-        print(f"Debug - Course Name: {course_name}")
-        print(f"Debug - Available Courses: {courses}")
-        print(f"Debug - All Courses Root exists: {os.path.isdir(ALL_COURSES_ROOT)}")
+        print(f"API /api/courses - Username: {username}")
+        print(f"API /api/courses - Course Name: {course_name}")
+        print(f"API /api/courses - Available Courses: {courses}")
+        print(f"API /api/courses - Courses Root: {ALL_COURSES_ROOT}")
+        print(f"API /api/courses - Root exists: {os.path.isdir(ALL_COURSES_ROOT)}")
+        
         if os.path.isdir(ALL_COURSES_ROOT):
-            print(f"Debug - Folders in root: {os.listdir(ALL_COURSES_ROOT)}")
+            all_dirs = os.listdir(ALL_COURSES_ROOT)
+            print(f"API /api/courses - All directories: {all_dirs}")
+            valid_dirs = [d for d in all_dirs if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) and not d.startswith(".")]
+            print(f"API /api/courses - Valid directories: {valid_dirs}")
         
         self._send_json(courses)
     
