@@ -14,20 +14,25 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 # --- 設定路徑 ---
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
 ALL_COURSES_ROOT = "/home/jupyter-data/notes"
 
 def setup_viewhtml():
+    """jupyter-server-proxy 的設定函式"""
     return {
         'command': [sys.executable, '-m', 'viewhtml', '-u', '{unix_socket}'],
         'unix_socket': True,
-        'launcher_entry': { 'enabled': True, 'title': '上課講義' },
+        'launcher_entry': {
+            'enabled': True,
+            'title': '上課講義',
+        },
     }
 
 class CourseNotesHandler:
+    """處理課程講義相關邏輯"""
     def __init__(self):
         exporter = HTMLExporter()
         exporter.exclude_input_prompt = True
@@ -38,7 +43,8 @@ class CourseNotesHandler:
         return os.environ.get('JUPYTERHUB_USER')
 
     def get_user_course(self, username):
-        if not username or not os.path.isfile(CSV_PATH): return "Reference"
+        if not username or not os.path.isfile(CSV_PATH):
+            return "Reference"
         try:
             df = pd.read_csv(CSV_PATH)
             matched = df[df["username"] == username]
@@ -49,7 +55,6 @@ class CourseNotesHandler:
 
     def get_available_courses(self, course_name):
         if not os.path.isdir(ALL_COURSES_ROOT):
-            print(f"DEBUG: ALL_COURSES_ROOT not found at '{ALL_COURSES_ROOT}'")
             return []
         all_folders = [d for d in os.listdir(ALL_COURSES_ROOT) if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) and not d.startswith(".")]
         if course_name == "all": return sorted(all_folders)
@@ -75,16 +80,13 @@ class CourseNotesHandler:
         except Exception as e:
             return f"<html><body><h2>轉換錯誤</h2><p>{str(e)}</p></body></html>"
 
-
 class RequestHandler(BaseHTTPRequestHandler):
+    """處理 HTTP 請求"""
     def __init__(self, *args, **kwargs):
         self.notes_handler = CourseNotesHandler()
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
-        # 後端日誌，用於檢查收到的請求路徑
-        print(f"DEBUG: Backend received GET for path: '{self.path}'")
-        
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         query_params = parse_qs(parsed_path.query)
@@ -101,7 +103,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         if endpoint:
             endpoint()
         else:
-            self._send_error(f"404 Not Found: Backend endpoint '{path}' does not exist.")
+            self._send_error(f"404 Not Found: Endpoint '{path}' does not exist.")
 
     def _serve_main_page(self):
         username = self.notes_handler.detect_username()
@@ -112,7 +114,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 <html lang="zh-TW">
 <head>
     <meta charset="utf-8" />
-    <title>上課講義 (偵錯版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上課講義</title>
     <script id="base-tag-setter">
         (function() {{
             const path = window.location.pathname;
@@ -122,54 +125,110 @@ class RequestHandler(BaseHTTPRequestHandler):
             document.head.insertBefore(base, document.getElementById('base-tag-setter'));
         }})();
     </script>
-    <style> body {{ font-family: sans-serif; margin: 0; }} /* 其他樣式 */ </style>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background-color: #f5f5f5; }}
+        .container {{ display: flex; height: 100vh; }}
+        .sidebar {{ width: 300px; background-color: #2c3e50; color: white; padding: 20px; overflow-y: auto; flex-shrink: 0; }}
+        h2 {{ margin-top: 0; font-size: 24px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+        .user-info {{ background-color: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 20px; word-break: break-all; }}
+        label {{ display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; }}
+        select {{ width: 100%; padding: 10px; border-radius: 5px; background-color: #34495e; color: white; font-size: 16px; cursor: pointer; border: none; }}
+        select:disabled {{ cursor: not-allowed; opacity: 0.6; }}
+        .main-content {{ flex: 1; padding: 20px; overflow-y: auto; }}
+        .file-viewer {{ background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: calc(100vh - 40px); }}
+        iframe {{ width: 100%; height: 100%; border: none; border-radius: 8px; }}
+        .welcome {{ text-align: center; color: #7f8c8d; padding: 20px; }}
+    </style>
 </head>
 <body>
-    <div id="debug-panel" style="position: fixed; bottom: 10px; left: 10px; background: #ffffcc; border: 2px solid black; padding: 10px; font-family: monospace; font-size: 12px; max-width: 90%; z-index: 10000; max-height: 200px; overflow-y: scroll;">
-        <h4 style="margin:0 0 10px 0;">偵錯資訊</h4>
-        <pre id="debug-output"></pre>
+    <div class="container">
+        <div class="sidebar">
+            <h2>📚 上課講義</h2>
+            <div class="user-info">
+                <p><strong>帳號：</strong> {username or '未知'}</p>
+                <p><strong>預設課程：</strong> {course_name}</p>
+            </div>
+            <label for="course-select">選擇課程：</label>
+            <select id="course-select" onchange="loadFolders()"><option value="">(請選擇)</option></select>
+            <label for="folder-select">選擇資料夾：</label>
+            <select id="folder-select" onchange="loadFiles()" disabled><option value="">(請選擇)</option></select>
+            <label for="file-select">選擇檔案：</label>
+            <select id="file-select" onchange="viewFile()" disabled><option value="">(請選擇)</option></select>
+        </div>
+        <div class="main-content">
+            <div id="content-area" class="file-viewer">
+                <div class="welcome"><h1>歡迎使用</h1><p>請從左側選單開始瀏覽檔案</p></div>
+            </div>
+        </div>
     </div>
-    
     <script>
-        const debugOutput = document.getElementById('debug-output');
-        function log(message) {{
-            console.log(message);
-            debugOutput.textContent += message + '\\n';
-        }}
-
-        log('--- 偵錯日誌開始 ---');
-        log(`頁面載入時間: ${{new Date().toLocaleTimeString()}}`);
-        log(`完整 URL (window.location.href):\\n${{window.location.href}}`);
-        log(`偵測到的 <base href>: ${{document.baseURI}}`);
+        const courseSelect = document.getElementById('course-select');
+        const folderSelect = document.getElementById('folder-select');
+        const fileSelect = document.getElementById('file-select');
+        const contentArea = document.getElementById('content-area');
+        let currentCourse = '', currentFolder = '';
 
         async function fetchJSON(url) {{
-            const absoluteUrl = new URL(url, document.baseURI).href;
-            log(`--- fetchJSON 開始 ---`);
-            log(`準備 fetch 相對路徑: ${{url}}`);
-            log(`解析後的絕對路徑: ${{absoluteUrl}}`);
-            
             try {{
                 const response = await fetch(url);
-                log(`Fetch 回應狀態: ${{response.status}}`);
-                if (!response.ok) {{
-                    const errorText = await response.text();
-                    throw new Error(`HTTP 錯誤! 狀態: ${{response.status}}. 回應: ${{errorText}}`);
-                }}
+                if (!response.ok) throw new Error(`HTTP 錯誤! 狀態: ${{response.status}}`);
                 return await response.json();
             }} catch (error) {{
-                log(`*** Fetch 發生嚴重錯誤 ***`);
-                log(error.toString());
+                console.error(`載入 ${{url}} 失敗:`, error);
+                contentArea.innerHTML = `<div class="welcome"><h1>載入失敗</h1><p>${{error}}</p></div>`;
                 return null;
             }}
         }}
 
         async function loadCourses() {{
             const courses = await fetchJSON('api/courses');
-            if (courses) {{
-                log(`成功取得課程: ${JSON.stringify(courses)}`);
-            }} else {{
-                log(`取得課程失敗，courses 變數為 null。`);
+            if (!courses) return;
+            courseSelect.innerHTML = '<option value="">(請選擇課程)</option>';
+            courses.forEach(c => {{
+                const option = document.createElement('option');
+                option.value = c; option.textContent = c;
+                courseSelect.appendChild(option);
+            }});
+        }}
+        
+        async function loadFolders() {{
+            currentCourse = courseSelect.value;
+            folderSelect.disabled = true; fileSelect.disabled = true;
+            folderSelect.innerHTML = '<option value="">(請選擇資料夾)</option>';
+            fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
+            if (!currentCourse) return;
+            const folders = await fetchJSON(`api/folders?course=${{encodeURIComponent(currentCourse)}}`);
+            if (folders && folders.length > 0) {{
+                folders.forEach(f => {{
+                    const option = document.createElement('option');
+                    option.value = f; option.textContent = f;
+                    folderSelect.appendChild(option);
+                }});
+                folderSelect.disabled = false;
             }}
+        }}
+
+        async function loadFiles() {{
+            currentFolder = folderSelect.value;
+            fileSelect.disabled = true;
+            fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
+            if (!currentFolder) return;
+            const files = await fetchJSON(`api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
+            if (files && files.length > 0) {{
+                files.forEach(f => {{
+                    const option = document.createElement('option');
+                    option.value = f; option.textContent = f;
+                    fileSelect.appendChild(option);
+                }});
+                fileSelect.disabled = false;
+            }}
+        }}
+
+        function viewFile() {{
+            const fileName = fileSelect.value;
+            if (!fileName) return;
+            const viewUrl = `view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`;
+            contentArea.innerHTML = `<iframe src="${{viewUrl}}"></iframe>`;
         }}
         
         document.addEventListener('DOMContentLoaded', loadCourses);
@@ -177,8 +236,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 </body>
 </html>
 """
-        self._send_response_header(200, 'text/html; charset=utf-8')
-        self.wfile.write(html.encode('utf-8'))
+        self._send_html(html)
 
     def _serve_api(self, handler, *args):
         try:
@@ -187,36 +245,71 @@ class RequestHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_error(f"API Error: {e}", 500)
     
-    def _serve_file_viewer(self, query_params): # 省略，與偵錯無關
-        self._send_error("File viewer not implemented in debug mode.")
+    def _serve_file_viewer(self, query_params):
+        course = query_params.get('course', [''])[0]
+        folder = query_params.get('folder', [''])[0]
+        file_name = query_params.get('file', [''])[0]
+
+        if not all([course, folder, file_name]): return self._send_error("缺少必要參數")
+        if ".." in course or ".." in folder or ".." in file_name: return self._send_error("偵測到無效的路徑")
+        
+        file_path = os.path.join(ALL_COURSES_ROOT, course, folder, file_name)
+        if not os.path.isfile(file_path): return self._send_error(f"檔案不存在: {file_path}")
+
+        ext = os.path.splitext(file_name)[1].lower()
+        try:
+            if ext == '.pdf': self._send_file(file_path, 'application/pdf')
+            elif ext == '.html':
+                with open(file_path, 'r', encoding='utf-8') as f: content = f.read()
+                self._send_html(content)
+            elif ext == '.ipynb':
+                self._send_html(self.notes_handler.convert_ipynb_to_html(file_path))
+            else: self._send_error("不支援的檔案類型")
+        except Exception as e:
+            self._send_error(f"讀取或轉換檔案時發生錯誤: {e}", 500)
 
     def _send_response_header(self, code, content_type):
         self.send_response(code)
         self.send_header('Content-Type', content_type)
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.end_headers()
+
+    def _send_html(self, content):
+        self._send_response_header(200, 'text/html; charset=utf-8')
+        self.wfile.write(content.encode('utf-8'))
 
     def _send_json(self, data):
         self._send_response_header(200, 'application/json; charset=utf-8')
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
         
-    def _send_error(self, message, code=404):
-        self._send_response_header(code, 'text/html; charset=utf-8')
-        self.wfile.write(f"<h1>Error {code}</h1><p>{message}</p>".encode('utf-8'))
+    def _send_file(self, file_path, content_type):
+        self._send_response_header(200, content_type)
+        with open(file_path, 'rb') as f: self.wfile.write(f.read())
 
-# ... Server setup (main function)...
+    def _send_error(self, message, code=404):
+        html = f'<!DOCTYPE html><html><head><title>錯誤</title></head><body><h2>發生錯誤</h2><p>{message}</p></body></html>'
+        self._send_response_header(code, 'text/html; charset=utf-8')
+        self.wfile.write(html.encode('utf-8'))
+
+# *** FIX: 重新加入遺失的 HTTPUnixServer 類別定義 ***
+class HTTPUnixServer(HTTPServer):
+    address_family = socket.AF_UNIX
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--unix-socket', required=True)
+    parser.add_argument('-u', '--unix-socket', required=True, help='Path to the Unix socket.')
     args = parser.parse_args()
     
     socket_path = Path(args.unix_socket)
     socket_path.unlink(missing_ok=True)
     
     httpd = HTTPUnixServer(args.unix_socket, RequestHandler)
-    print(f"DEBUG: Launching server on Unix socket: {args.unix_socket}")
+    print(f"INFO: Launching server on Unix socket: {args.unix_socket}")
     
     try:
         httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nServer shutting down.")
     finally:
         socket_path.unlink(missing_ok=True)
 
