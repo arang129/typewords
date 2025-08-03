@@ -14,7 +14,7 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.02'
+__version__ = '0.03'
 
 # 設定路徑
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
@@ -27,7 +27,7 @@ def setup_viewhtml():
         'launcher_entry': {
             'enabled': True,
             'icon_path': '/opt/tljh/hub/share/jupyterhub/derivatives.svg',
-            'title': '上課講義_測試',
+            'title': '上課講義',
         },
     }
 
@@ -46,44 +46,74 @@ class CourseNotesHandler:
     
     def detect_username(self):
         """偵測使用者名稱"""
+        # 優先使用環境變數
         username = os.environ.get('JUPYTERHUB_USER')
         if username:
+            print(f"Debug - Found username from JUPYTERHUB_USER: {username}")
             return username
         
         # 備用方案：從路徑偵測
         current_dir = os.getcwd()
+        print(f"Debug - Current directory: {current_dir}")
         for seg in current_dir.split(os.sep):
             if seg.startswith("jupyter-"):
-                return seg.replace("jupyter-", "")
+                username = seg.replace("jupyter-", "")
+                print(f"Debug - Found username from path: {username}")
+                return username
+        
+        print("Debug - No username found")
         return None
     
     def get_user_course(self, username):
         """根據使用者名稱取得課程"""
         if not os.path.isfile(CSV_PATH):
+            print(f"Debug - CSV file not found at: {CSV_PATH}")
             return "Reference"
         
         try:
             df = pd.read_csv(CSV_PATH)
+            print(f"Debug - CSV loaded successfully, shape: {df.shape}")
+            print(f"Debug - Columns: {df.columns.tolist()}")
+            
             matched = df[df["username"] == username]
-            return matched.iloc[0]["course"] if not matched.empty else "Reference"
-        except:
+            if not matched.empty:
+                course = matched.iloc[0]["course"]
+                print(f"Debug - Found course for {username}: {course}")
+                return course
+            else:
+                print(f"Debug - No match found for username: {username}")
+                return "Reference"
+        except Exception as e:
+            print(f"Debug - Error reading CSV: {e}")
             return "Reference"
     
     def get_available_courses(self, course_name):
         """取得使用者可存取的課程列表"""
         if not os.path.isdir(ALL_COURSES_ROOT):
+            print(f"Debug - Courses root directory not found: {ALL_COURSES_ROOT}")
             return []
         
         all_folders = [d for d in os.listdir(ALL_COURSES_ROOT) 
                       if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) 
                       and not d.startswith(".")]
         
+        print(f"Debug - All folders in courses root: {all_folders}")
+        print(f"Debug - User course_name: {course_name}")
+        
         if course_name == "all":
-            return sorted(all_folders)
+            result = sorted(all_folders)
         elif course_name.lower() == "research":
-            return sorted([d for d in ("Reference", "Research") if d in all_folders])
+            # Research 權限可以看 Reference 和 Research
+            result = sorted([d for d in all_folders if d in ["Reference", "Research"]])
         else:
-            return sorted([d for d in ("Reference", course_name) if d in all_folders])
+            # 一般使用者可以看 Reference 和自己的課程
+            possible = ["Reference"]
+            if course_name in all_folders:
+                possible.append(course_name)
+            result = sorted(possible)
+        
+        print(f"Debug - Available courses for user: {result}")
+        return result
     
     def get_date_folders(self, course_path):
         """取得課程下的日期資料夾"""
@@ -483,6 +513,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         username = self.notes_handler.detect_username()
         course_name = self.notes_handler.get_user_course(username) if username else "Reference"
         courses = self.notes_handler.get_available_courses(course_name)
+        
+        # 除錯訊息
+        print(f"Debug - Username: {username}")
+        print(f"Debug - Course Name: {course_name}")
+        print(f"Debug - Available Courses: {courses}")
+        print(f"Debug - All Courses Root exists: {os.path.isdir(ALL_COURSES_ROOT)}")
+        if os.path.isdir(ALL_COURSES_ROOT):
+            print(f"Debug - Folders in root: {os.listdir(ALL_COURSES_ROOT)}")
         
         self._send_json(courses)
     
