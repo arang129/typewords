@@ -14,11 +14,10 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 # --- 設定路徑 ---
 # 注意：這些路徑必須在 JupyterHub 環境中存在且可供使用者存取。
-# 在 TLJH (The Littlest JupyterHub) 中，共享資料夾通常建議放在如 /srv/data 或 /opt/tljh/user/share 等位置。
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
 ALL_COURSES_ROOT = "/home/jupyter-data/notes"
 
@@ -116,7 +115,6 @@ class CourseNotesHandler:
 
     def enhance_html_with_math(self, html_content):
         """增強 HTML 內容，處理數學公式和連結"""
-        # 處理外部連結
         regex = re.compile(r'(?i)(<a\s+(?:[^>]*?\s+)?href=(?:"|\')https?://[^>]+)((?!.*\btarget\s*=)[^>]*>)')
         html_content = regex.sub(r'\1 target="_blank" rel="noopener noreferrer"\2', html_content)
 
@@ -125,17 +123,7 @@ class CourseNotesHandler:
 
         enhanced_script = """
         <script data-streamlit-enhanced="true">
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-                displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
-                processEscapes: true,
-                processEnvironments: true
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-            }
-        };
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']], displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']], processEscapes: true, processEnvironments: true }, options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] } };
         function scrollToTarget(targetId) {
             if (!targetId) return;
             try {
@@ -146,9 +134,7 @@ class CourseNotesHandler:
                     const originalBg = targetElement.style.backgroundColor;
                     targetElement.style.backgroundColor = '#ffffcc';
                     targetElement.style.transition = 'background-color 0.3s ease';
-                    setTimeout(() => {
-                        targetElement.style.backgroundColor = originalBg;
-                    }, 2000);
+                    setTimeout(() => { targetElement.style.backgroundColor = originalBg; }, 2000);
                 }
             } catch (e) { console.error('Error scrolling to target:', targetId, e); }
         }
@@ -195,11 +181,21 @@ class RequestHandler(BaseHTTPRequestHandler):
             '/view': lambda: self._serve_file_viewer(query_params)
         }
         
-        endpoint = endpoints.get(path)
+        # 移除路徑中的代理前綴以匹配端點
+        # e.g., /user/test/proxy/8888/api/courses -> /api/courses
+        proxy_path_regex = r'^/.*?/proxy/[^/]+'
+        effective_path = re.sub(proxy_path_regex, '', path)
+        
+        endpoint = endpoints.get(effective_path)
         if endpoint:
             endpoint()
         else:
-            self._send_not_found()
+            # 如果是根路徑，也導向主頁
+            if effective_path.strip('/') == '':
+                 self._serve_main_page()
+            else:
+                 self._send_not_found(f"未找到端點: {effective_path} (原始路徑: {path})")
+
 
     def _serve_main_page(self):
         """主頁面"""
@@ -219,7 +215,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         .sidebar {{ width: 300px; background-color: #2c3e50; color: white; padding: 20px; overflow-y: auto; flex-shrink: 0; }}
         .sidebar h2 {{ margin-top: 0; font-size: 24px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
         .user-info {{ background-color: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 20px; }}
-        .user-info p {{ margin: 5px 0; }}
+        .user-info p {{ margin: 5px 0; word-break: break-all; }}
         .logo {{ text-align: center; margin-bottom: 20px; }}
         .logo img {{ max-width: 150px; border-radius: 8px; }}
         label {{ display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; }}
@@ -229,7 +225,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         .main-content {{ flex: 1; padding: 20px; overflow-y: auto; }}
         .file-viewer {{ background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: calc(100vh - 40px); }}
         iframe {{ width: 100%; height: 100%; border: none; border-radius: 8px; }}
-        .welcome {{ text-align: center; color: #7f8c8d; padding-top: 100px; }}
+        .welcome {{ text-align: center; color: #7f8c8d; padding: 20px; }}
         .welcome h1 {{ color: #2c3e50; }}
     </style>
 </head>
@@ -260,34 +256,30 @@ class RequestHandler(BaseHTTPRequestHandler):
         </div>
     </div>
     <script>
-        let currentCourse = '';
-        let currentFolder = '';
-        
-        // *** FIX: 動態計算基礎路徑以適應 jupyter-server-proxy ***
-        const path = window.location.pathname;
-        const basePath = path.substring(0, path.lastIndexOf('/') + 1);
-
         const courseSelect = document.getElementById('course-select');
         const folderSelect = document.getElementById('folder-select');
         const fileSelect = document.getElementById('file-select');
         const contentArea = document.getElementById('content-area');
+        let currentCourse = '';
+        let currentFolder = '';
 
         async function fetchJSON(url) {{
             try {{
+                // *** FIX: Use relative paths directly ***
                 const response = await fetch(url);
                 if (!response.ok) {{
-                    throw new Error(`HTTP error! status: ${{response.status}}`);
+                    throw new Error(`HTTP 錯誤! 狀態: ${{response.status}}`);
                 }}
                 return await response.json();
             }} catch (error) {{
-                console.error(`Fetch error for ${{url}}:`, error);
+                console.error(`載入 ${{url}} 失敗:`, error);
                 contentArea.innerHTML = `<div class="welcome"><h1>載入失敗</h1><p>無法從 ${{url}} 取得資料。</p><p>${{error}}</p></div>`;
                 return null;
             }}
         }}
 
         async function loadCourses() {{
-            const courses = await fetchJSON(`${{basePath}}api/courses`);
+            const courses = await fetchJSON('api/courses');
             if (!courses) return;
 
             courseSelect.innerHTML = '<option value="">(請選擇課程)</option>';
@@ -308,7 +300,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             if (!currentCourse) return;
             
-            const folders = await fetchJSON(`${{basePath}}api/folders?course=${{encodeURIComponent(currentCourse)}}`);
+            const folders = await fetchJSON(`api/folders?course=${{encodeURIComponent(currentCourse)}}`);
             if (folders && folders.length > 0) {{
                 folders.forEach(folder => {{
                     const option = document.createElement('option');
@@ -327,7 +319,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             if (!currentFolder) return;
 
-            const files = await fetchJSON(`${{basePath}}api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
+            const files = await fetchJSON(`api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
             if (files) {{
                 if (files.length === 0) {{
                     fileSelect.innerHTML = '<option value="">沒有可預覽的檔案</option>';
@@ -347,11 +339,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             const fileName = fileSelect.value;
             if (!fileName) return;
 
-            const viewUrl = `${{basePath}}view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`;
+            const viewUrl = `view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`;
             contentArea.innerHTML = `<iframe src="${{viewUrl}}"></iframe>`;
         }}
 
-        // 初始化
         document.addEventListener('DOMContentLoaded', loadCourses);
     </script>
 </body>
@@ -360,7 +351,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         self._send_html(html)
 
     def _serve_api(self, handler, *args):
-        """通用 API 服務函式"""
         data = handler(*args)
         self._send_json(data)
 
@@ -385,7 +375,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         self._serve_api(self.notes_handler.get_preview_files, folder_path)
 
     def _serve_file_viewer(self, query_params):
-        """檔案檢視器"""
         course = query_params.get('course', [''])[0]
         folder = query_params.get('folder', [''])[0]
         file_name = query_params.get('file', [''])[0]
@@ -393,7 +382,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         if not all([course, folder, file_name]):
             return self._send_error("缺少必要參數 (course, folder, or file)")
         
-        # 安全性：防止路徑遍歷
         if ".." in course or ".." in folder or ".." in file_name:
             return self._send_error("偵測到無效的路徑")
 
@@ -412,7 +400,6 @@ class RequestHandler(BaseHTTPRequestHandler):
                     content = f.read()
                 self._send_html(self.notes_handler.enhance_html_with_math(content))
             elif ext == '.md':
-                # 簡單的 Markdown 轉 HTML
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
                 html = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{file_name}</title></head><body><pre>{content}</pre></body></html>'
@@ -426,12 +413,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._send_error(f"讀取或轉換檔案時發生錯誤: {e}")
 
     def _send_response_header(self, code, content_type):
-        """發送回應標頭"""
         self.send_response(code)
         self.send_header('Content-Type', content_type)
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
         self.end_headers()
 
     def _send_html(self, content):
@@ -452,8 +436,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         self._send_response_header(code, 'text/html; charset=utf-8')
         self.wfile.write(html.encode('utf-8'))
         
-    def _send_not_found(self):
-        self._send_error("404 Not Found: 頁面不存在")
+    def _send_not_found(self, message="404 Not Found: 頁面不存在"):
+        self._send_error(message)
 
     def address_string(self):
         return str(self.client_address)
@@ -472,29 +456,25 @@ def main():
 
     if args.unix_socket:
         socket_path = Path(args.unix_socket)
-        if socket_path.exists():
-            socket_path.unlink()
+        socket_path.unlink(missing_ok=True)
         server_address = args.unix_socket
         ServerClass = HTTPUnixServer
         print(f"Launching server on Unix socket: {server_address}")
     elif args.port:
         server_address = ('127.0.0.1', args.port)
-        ServerClass = HTTPServer
         print(f"Launching server on TCP port: {args.port}")
     else:
-        print("Error: Either --port or --unix-socket must be specified.", file=sys.stderr)
-        sys.exit(1)
+        sys.exit("Error: Either --port or --unix-socket must be specified.")
         
     httpd = ServerClass(server_address, RequestHandler)
     
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("Server shutting down.")
+        print("\nServer shutting down.")
     finally:
         if args.unix_socket:
             Path(args.unix_socket).unlink(missing_ok=True)
-
 
 if __name__ == '__main__':
     main()
