@@ -14,13 +14,16 @@ import json
 import nbformat
 from nbconvert import HTMLExporter
 
-__version__ = '0.09'
+__version__ = '0.0.1'
 
-# 設定路徑
+# --- 設定路徑 ---
+# 注意：這些路徑必須在 JupyterHub 環境中存在且可供使用者存取。
+# 在 TLJH (The Littlest JupyterHub) 中，共享資料夾通常建議放在如 /srv/data 或 /opt/tljh/user/share 等位置。
 CSV_PATH = "/home/jupyter-data/notes/students.csv"
 ALL_COURSES_ROOT = "/home/jupyter-data/notes"
 
 def setup_viewhtml():
+    """jupyter-server-proxy 的設定函式"""
     return {
         'command': [sys.executable, '-m', 'viewhtml', '-u', '{unix_socket}'],
         'unix_socket': True,
@@ -33,107 +36,93 @@ def setup_viewhtml():
 
 class CourseNotesHandler:
     """處理課程講義相關邏輯"""
-    
+
     def __init__(self):
         self.html_exporter = self._setup_html_exporter()
-    
+
     def _setup_html_exporter(self):
         """設定 nbconvert HTMLExporter"""
         exporter = HTMLExporter()
         exporter.exclude_input_prompt = True
         exporter.exclude_output_prompt = True
         return exporter
-    
+
     def detect_username(self):
         """偵測使用者名稱"""
-        username = os.environ.get('JUPYTERHUB_USER')
-        if username:
-            return username
-        
-        # 備用方案：從路徑偵測
-        current_dir = os.getcwd()
-        for seg in current_dir.split(os.sep):
-            if seg.startswith("jupyter-"):
-                return seg.replace("jupyter-", "")
-        return None
-    
+        return os.environ.get('JUPYTERHUB_USER')
+
     def get_user_course(self, username):
         """根據使用者名稱取得課程"""
-        if not os.path.isfile(CSV_PATH):
+        if not username or not os.path.isfile(CSV_PATH):
             return "Reference"
-        
+
         try:
             df = pd.read_csv(CSV_PATH)
             matched = df[df["username"] == username]
             return matched.iloc[0]["course"] if not matched.empty else "Reference"
-        except:
+        except Exception:
             return "Reference"
-    
+
     def get_available_courses(self, course_name):
         """取得使用者可存取的課程列表"""
         if not os.path.isdir(ALL_COURSES_ROOT):
             return []
-        
-        all_folders = [d for d in os.listdir(ALL_COURSES_ROOT) 
-                      if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) 
+
+        all_folders = [d for d in os.listdir(ALL_COURSES_ROOT)
+                      if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d))
                       and not d.startswith(".")]
-        
+
         if course_name == "all":
             return sorted(all_folders)
         elif course_name.lower() == "research":
             return sorted([d for d in ("Reference", "Research") if d in all_folders])
         else:
             return sorted([d for d in ("Reference", course_name) if d in all_folders])
-    
+
     def get_date_folders(self, course_path):
         """取得課程下的日期資料夾"""
         if not os.path.isdir(course_path):
             return []
-        
+
         all_subfolders = [f for f in os.listdir(course_path)
-                         if os.path.isdir(os.path.join(course_path, f)) 
+                         if os.path.isdir(os.path.join(course_path, f))
                          and not f.startswith(".")]
-        
+
         today_str = date.today().strftime("%Y%m%d")
         valid_folders = []
-        
+
         for fn in all_subfolders:
-            # 日期格式資料夾
             if len(fn) == 8 and fn.isdigit() and fn <= today_str:
                 valid_folders.append(fn)
-            # 非日期格式資料夾
             elif not fn.isdigit():
                 valid_folders.append(fn)
-        
+
         return sorted(valid_folders)
-    
-    def get_preview_files(self, folder_path, course_name):
+
+    def get_preview_files(self, folder_path):
         """取得可預覽的檔案列表"""
         if not os.path.isdir(folder_path):
             return []
-        
+
         files = []
         for f in os.listdir(folder_path):
             if os.path.isfile(os.path.join(folder_path, f)):
                 ext = f.lower()
-                if (ext.endswith(".pdf") or ext.endswith(".html") or 
-                    ext.endswith(".md") or 
-                    (f.startswith("[無解答]") and ext.endswith(".ipynb"))):
+                if (ext.endswith((".pdf", ".html", ".md")) or
+                   (f.startswith("[無解答]") and ext.endswith(".ipynb"))):
                     files.append(f)
-        
+
         return sorted(files)
-    
+
     def enhance_html_with_math(self, html_content):
         """增強 HTML 內容，處理數學公式和連結"""
         # 處理外部連結
         regex = re.compile(r'(?i)(<a\s+(?:[^>]*?\s+)?href=(?:"|\')https?://[^>]+)((?!.*\btarget\s*=)[^>]*>)')
         html_content = regex.sub(r'\1 target="_blank" rel="noopener noreferrer"\2', html_content)
-        
-        # 避免重複注入
+
         if 'data-streamlit-enhanced="true"' in html_content:
             return html_content
-        
-        # MathJax 腳本
+
         enhanced_script = """
         <script data-streamlit-enhanced="true">
         window.MathJax = {
@@ -147,193 +136,101 @@ class CourseNotesHandler:
                 skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
             }
         };
-        
         function scrollToTarget(targetId) {
             if (!targetId) return;
             try {
                 const decodedTargetId = decodeURIComponent(targetId);
                 const targetElement = document.getElementById(decodedTargetId);
-                
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    
                     const originalBg = targetElement.style.backgroundColor;
                     targetElement.style.backgroundColor = '#ffffcc';
                     targetElement.style.transition = 'background-color 0.3s ease';
-                    
                     setTimeout(() => {
                         targetElement.style.backgroundColor = originalBg;
                     }, 2000);
                 }
-            } catch (e) {
-                console.error('Error scrolling to target:', targetId, e);
-            }
+            } catch (e) { console.error('Error scrolling to target:', targetId, e); }
         }
-        
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('a[href^="#"]').forEach(link => {
                 link.addEventListener('click', function(event) {
                     event.preventDefault();
                     const href = link.getAttribute('href');
-                    if (href && href.length > 1) {
-                        scrollToTarget(href.substring(1));
-                    }
+                    if (href && href.length > 1) scrollToTarget(href.substring(1));
                 });
             });
         });
         </script>
         <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         """
-        
-        if '</head>' in html_content:
-            html_content = html_content.replace('</head>', enhanced_script + '</head>', 1)
-        else:
-            html_content = enhanced_script + html_content
-        
-        return html_content
-    
+        return html_content.replace('</head>', enhanced_script + '</head>', 1) if '</head>' in html_content else enhanced_script + html_content
+
     def convert_ipynb_to_html(self, file_path):
         """將 Jupyter notebook 轉換為 HTML"""
         try:
-            nb_node = nbformat.read(file_path, as_version=4)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                nb_node = nbformat.read(f, as_version=4)
             html_data, _ = self.html_exporter.from_notebook_node(nb_node)
             return self.enhance_html_with_math(html_data)
         except Exception as e:
             return f"<html><body><h2>轉換錯誤</h2><p>{str(e)}</p></body></html>"
 
 class RequestHandler(BaseHTTPRequestHandler):
+    """處理 HTTP 請求"""
     def __init__(self, *args, **kwargs):
         self.notes_handler = CourseNotesHandler()
         super().__init__(*args, **kwargs)
-    
+
     def do_GET(self):
-        """處理 GET 請求"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         query_params = parse_qs(parsed_path.query)
+
+        endpoints = {
+            '/': self._serve_main_page,
+            '/api/courses': lambda: self._serve_courses_api(),
+            '/api/folders': lambda: self._serve_folders_api(query_params),
+            '/api/files': lambda: self._serve_files_api(query_params),
+            '/view': lambda: self._serve_file_viewer(query_params)
+        }
         
-        if path == '/':
-            self._serve_main_page()
-        elif path == '/api/courses':
-            self._serve_courses_api()
-        elif path == '/api/folders':
-            self._serve_folders_api(query_params)
-        elif path == '/api/files':
-            self._serve_files_api(query_params)
-        elif path == '/view':
-            self._serve_file_viewer(query_params)
+        endpoint = endpoints.get(path)
+        if endpoint:
+            endpoint()
         else:
             self._send_not_found()
-    
+
     def _serve_main_page(self):
         """主頁面"""
         username = self.notes_handler.detect_username()
-        course_name = self.notes_handler.get_user_course(username) if username else "Reference"
-        
-        # 加入除錯資訊
-        print(f"Main page - Username: {username}, Course: {course_name}")
+        course_name = self.notes_handler.get_user_course(username)
         
         html = f"""
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>上課講義</title>
     <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }}
-        .container {{
-            display: flex;
-            height: 100vh;
-        }}
-        .sidebar {{
-            width: 300px;
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            overflow-y: auto;
-        }}
-        .sidebar h2 {{
-            margin-top: 0;
-            font-size: 24px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }}
-        .user-info {{
-            background-color: #34495e;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }}
-        .user-info p {{
-            margin: 5px 0;
-        }}
-        .logo {{
-            text-align: center;
-            margin-bottom: 20px;
-        }}
-        .logo img {{
-            max-width: 150px;
-            border-radius: 8px;
-        }}
-        select {{
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
-            background-color: #34495e;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }}
-        select:hover {{
-            background-color: #3498db;
-        }}
-        .main-content {{
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }}
-        .file-viewer {{
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            min-height: 500px;
-        }}
-        iframe {{
-            width: 100%;
-            height: 800px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }}
-        .welcome {{
-            text-align: center;
-            color: #7f8c8d;
-            margin-top: 100px;
-        }}
-        .welcome h1 {{
-            color: #2c3e50;
-        }}
-        .error {{
-            color: #e74c3c;
-            padding: 20px;
-            background-color: #fadbd8;
-            border-radius: 5px;
-        }}
-        .debug-info {{
-            background-color: #f0f0f0;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            color: #333;
-        }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background-color: #f5f5f5; }}
+        .container {{ display: flex; height: 100vh; }}
+        .sidebar {{ width: 300px; background-color: #2c3e50; color: white; padding: 20px; overflow-y: auto; flex-shrink: 0; }}
+        .sidebar h2 {{ margin-top: 0; font-size: 24px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+        .user-info {{ background-color: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 20px; }}
+        .user-info p {{ margin: 5px 0; }}
+        .logo {{ text-align: center; margin-bottom: 20px; }}
+        .logo img {{ max-width: 150px; border-radius: 8px; }}
+        label {{ display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; }}
+        select {{ width: 100%; padding: 10px; border: none; border-radius: 5px; background-color: #34495e; color: white; font-size: 16px; cursor: pointer; }}
+        select:hover {{ background-color: #3498db; }}
+        select:disabled {{ cursor: not-allowed; opacity: 0.6; }}
+        .main-content {{ flex: 1; padding: 20px; overflow-y: auto; }}
+        .file-viewer {{ background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: calc(100vh - 40px); }}
+        iframe {{ width: 100%; height: 100%; border: none; border-radius: 8px; }}
+        .welcome {{ text-align: center; color: #7f8c8d; padding-top: 100px; }}
+        .welcome h1 {{ color: #2c3e50; }}
     </style>
 </head>
 <body>
@@ -346,138 +243,92 @@ class RequestHandler(BaseHTTPRequestHandler):
             </div>
             <h2>📚 上課講義</h2>
             <div class="user-info">
-                <p><strong>使用者帳號：</strong> {username or '未知'}</p>
-                <p><strong>課程名稱：</strong> {course_name}</p>
+                <p><strong>帳號：</strong> {username or '未知'}</p>
+                <p><strong>預設課程：</strong> {course_name}</p>
             </div>
-            
-            <label for="course-select">請選擇課程：</label>
-            <select id="course-select" onchange="loadFolders()">
-                <option value="">(請選擇課程)</option>
-            </select>
-            
-            <label for="folder-select">請選擇資料夾：</label>
-            <select id="folder-select" onchange="loadFiles()" disabled>
-                <option value="">(請選擇資料夾)</option>
-            </select>
-            
-            <label for="file-select">請選擇檔案：</label>
-            <select id="file-select" onchange="viewFile()" disabled>
-                <option value="">(請選擇檔案)</option>
-            </select>
-            
-            <div id="debug-panel" class="debug-info" style="display: none;">
-                <strong>除錯資訊：</strong>
-                <div id="debug-content"></div>
-            </div>
+            <label for="course-select">選擇課程：</label>
+            <select id="course-select" onchange="loadFolders()"><option value="">(請選擇)</option></select>
+            <label for="folder-select">選擇資料夾：</label>
+            <select id="folder-select" onchange="loadFiles()" disabled><option value="">(請選擇)</option></select>
+            <label for="file-select">選擇檔案：</label>
+            <select id="file-select" onchange="viewFile()" disabled><option value="">(請選擇)</option></select>
         </div>
-        
         <div class="main-content">
             <div id="content-area" class="file-viewer">
-                <div class="welcome">
-                    <h1>歡迎使用上課講義系統</h1>
-                    <p>請從左側選擇課程、資料夾和檔案來開始瀏覽。</p>
-                </div>
+                <div class="welcome"><h1>歡迎使用上課講義系統</h1><p>請從左側選單開始瀏覽檔案</p></div>
             </div>
         </div>
     </div>
-    
     <script>
         let currentCourse = '';
         let currentFolder = '';
         
-        // 顯示除錯資訊
-        function showDebug(message) {{
-            const debugPanel = document.getElementById('debug-panel');
-            const debugContent = document.getElementById('debug-content');
-            debugPanel.style.display = 'block';
-            debugContent.innerHTML += '<br>' + message;
-        }}
-        
-        // 載入可用課程
-        async function loadCourses() {{
+        // *** FIX: 動態計算基礎路徑以適應 jupyter-server-proxy ***
+        const path = window.location.pathname;
+        const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+
+        const courseSelect = document.getElementById('course-select');
+        const folderSelect = document.getElementById('folder-select');
+        const fileSelect = document.getElementById('file-select');
+        const contentArea = document.getElementById('content-area');
+
+        async function fetchJSON(url) {{
             try {{
-                showDebug('開始載入課程...');
-                const response = await fetch('/api/courses');
-                showDebug('API 回應狀態: ' + response.status);
-                
+                const response = await fetch(url);
                 if (!response.ok) {{
-                    throw new Error('HTTP error! status: ' + response.status);
+                    throw new Error(`HTTP error! status: ${{response.status}}`);
                 }}
-                
-                const courses = await response.json();
-                showDebug('收到課程數量: ' + courses.length);
-                showDebug('課程列表: ' + JSON.stringify(courses));
-                
-                const select = document.getElementById('course-select');
-                select.innerHTML = '<option value="">(請選擇課程)</option>';
-                
-                courses.forEach(course => {{
-                    const option = document.createElement('option');
-                    option.value = course;
-                    option.textContent = course;
-                    select.appendChild(option);
-                }});
+                return await response.json();
             }} catch (error) {{
-                console.error('載入課程失敗:', error);
-                showDebug('載入課程錯誤: ' + error.message);
+                console.error(`Fetch error for ${{url}}:`, error);
+                contentArea.innerHTML = `<div class="welcome"><h1>載入失敗</h1><p>無法從 ${{url}} 取得資料。</p><p>${{error}}</p></div>`;
+                return null;
             }}
         }}
-        
-        // 載入資料夾
+
+        async function loadCourses() {{
+            const courses = await fetchJSON(`${{basePath}}api/courses`);
+            if (!courses) return;
+
+            courseSelect.innerHTML = '<option value="">(請選擇課程)</option>';
+            courses.forEach(course => {{
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                courseSelect.appendChild(option);
+            }});
+        }}
+
         async function loadFolders() {{
-            const courseSelect = document.getElementById('course-select');
-            const folderSelect = document.getElementById('folder-select');
-            const fileSelect = document.getElementById('file-select');
-            
             currentCourse = courseSelect.value;
+            folderSelect.disabled = true;
+            fileSelect.disabled = true;
+            folderSelect.innerHTML = '<option value="">(請選擇資料夾)</option>';
+            fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
+
+            if (!currentCourse) return;
             
-            if (!currentCourse) {{
-                folderSelect.disabled = true;
-                fileSelect.disabled = true;
-                return;
-            }}
-            
-            try {{
-                showDebug('載入資料夾 for course: ' + currentCourse);
-                const response = await fetch(`/api/folders?course=${{encodeURIComponent(currentCourse)}}`);
-                const folders = await response.json();
-                showDebug('收到資料夾數量: ' + folders.length);
-                
-                folderSelect.innerHTML = '<option value="">(請選擇資料夾)</option>';
+            const folders = await fetchJSON(`${{basePath}}api/folders?course=${{encodeURIComponent(currentCourse)}}`);
+            if (folders && folders.length > 0) {{
                 folders.forEach(folder => {{
                     const option = document.createElement('option');
                     option.value = folder;
                     option.textContent = folder;
                     folderSelect.appendChild(option);
                 }});
-                
                 folderSelect.disabled = false;
-                fileSelect.disabled = true;
-                fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
-            }} catch (error) {{
-                console.error('載入資料夾失敗:', error);
-                showDebug('載入資料夾錯誤: ' + error.message);
             }}
         }}
-        
-        // 載入檔案
+
         async function loadFiles() {{
-            const folderSelect = document.getElementById('folder-select');
-            const fileSelect = document.getElementById('file-select');
-            
             currentFolder = folderSelect.value;
-            
-            if (!currentFolder) {{
-                fileSelect.disabled = true;
-                return;
-            }}
-            
-            try {{
-                const response = await fetch(`/api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
-                const files = await response.json();
-                
-                fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
-                
+            fileSelect.disabled = true;
+            fileSelect.innerHTML = '<option value="">(請選擇檔案)</option>';
+
+            if (!currentFolder) return;
+
+            const files = await fetchJSON(`${{basePath}}api/files?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}`);
+            if (files) {{
                 if (files.length === 0) {{
                     fileSelect.innerHTML = '<option value="">沒有可預覽的檔案</option>';
                 }} else {{
@@ -489,214 +340,161 @@ class RequestHandler(BaseHTTPRequestHandler):
                     }});
                     fileSelect.disabled = false;
                 }}
-            }} catch (error) {{
-                console.error('載入檔案失敗:', error);
             }}
         }}
-        
-        // 檢視檔案
+
         function viewFile() {{
-            const fileSelect = document.getElementById('file-select');
             const fileName = fileSelect.value;
-            
             if (!fileName) return;
-            
-            const contentArea = document.getElementById('content-area');
-            const viewUrl = `/view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`;
-            
-            contentArea.innerHTML = `<iframe src="${{viewUrl}}" frameborder="0"></iframe>`;
+
+            const viewUrl = `${{basePath}}view?course=${{encodeURIComponent(currentCourse)}}&folder=${{encodeURIComponent(currentFolder)}}&file=${{encodeURIComponent(fileName)}}`;
+            contentArea.innerHTML = `<iframe src="${{viewUrl}}"></iframe>`;
         }}
-        
+
         // 初始化
-        loadCourses();
+        document.addEventListener('DOMContentLoaded', loadCourses);
     </script>
 </body>
 </html>
 """
         self._send_html(html)
-    
+
+    def _serve_api(self, handler, *args):
+        """通用 API 服務函式"""
+        data = handler(*args)
+        self._send_json(data)
+
     def _serve_courses_api(self):
-        """API: 取得課程列表"""
         username = self.notes_handler.detect_username()
-        course_name = self.notes_handler.get_user_course(username) if username else "Reference"
-        courses = self.notes_handler.get_available_courses(course_name)
-        
-        # 除錯訊息
-        print(f"API /api/courses - Username: {username}")
-        print(f"API /api/courses - Course Name: {course_name}")
-        print(f"API /api/courses - Available Courses: {courses}")
-        print(f"API /api/courses - Courses Root: {ALL_COURSES_ROOT}")
-        print(f"API /api/courses - Root exists: {os.path.isdir(ALL_COURSES_ROOT)}")
-        
-        if os.path.isdir(ALL_COURSES_ROOT):
-            all_dirs = os.listdir(ALL_COURSES_ROOT)
-            print(f"API /api/courses - All directories: {all_dirs}")
-            valid_dirs = [d for d in all_dirs if os.path.isdir(os.path.join(ALL_COURSES_ROOT, d)) and not d.startswith(".")]
-            print(f"API /api/courses - Valid directories: {valid_dirs}")
-        
-        self._send_json(courses)
-    
+        course_name = self.notes_handler.get_user_course(username)
+        self._serve_api(self.notes_handler.get_available_courses, course_name)
+
     def _serve_folders_api(self, query_params):
-        """API: 取得資料夾列表"""
         course = query_params.get('course', [''])[0]
         if not course:
-            self._send_json([])
-            return
-        
+            return self._send_json([])
         course_path = os.path.join(ALL_COURSES_ROOT, course)
-        folders = self.notes_handler.get_date_folders(course_path)
-        self._send_json(folders)
-    
+        self._serve_api(self.notes_handler.get_date_folders, course_path)
+
     def _serve_files_api(self, query_params):
-        """API: 取得檔案列表"""
         course = query_params.get('course', [''])[0]
         folder = query_params.get('folder', [''])[0]
-        
         if not course or not folder:
-            self._send_json([])
-            return
-        
+            return self._send_json([])
         folder_path = os.path.join(ALL_COURSES_ROOT, course, folder)
-        username = self.notes_handler.detect_username()
-        course_name = self.notes_handler.get_user_course(username) if username else "Reference"
-        files = self.notes_handler.get_preview_files(folder_path, course_name)
-        self._send_json(files)
-    
+        self._serve_api(self.notes_handler.get_preview_files, folder_path)
+
     def _serve_file_viewer(self, query_params):
         """檔案檢視器"""
         course = query_params.get('course', [''])[0]
         folder = query_params.get('folder', [''])[0]
         file_name = query_params.get('file', [''])[0]
-        
+
         if not all([course, folder, file_name]):
-            self._send_error("缺少必要參數")
-            return
+            return self._send_error("缺少必要參數 (course, folder, or file)")
         
+        # 安全性：防止路徑遍歷
+        if ".." in course or ".." in folder or ".." in file_name:
+            return self._send_error("偵測到無效的路徑")
+
         file_path = os.path.join(ALL_COURSES_ROOT, course, folder, file_name)
-        
+
         if not os.path.isfile(file_path):
-            self._send_error("檔案不存在")
-            return
-        
+            return self._send_error(f"檔案不存在: {file_path}")
+
         ext = os.path.splitext(file_name)[1].lower()
         
-        if ext == '.pdf':
-            # PDF 檔案直接傳送
-            self._send_file(file_path, 'application/pdf')
-        elif ext == '.html':
-            # HTML 檔案
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            enhanced_content = self.notes_handler.enhance_html_with_math(content)
-            self._send_html(enhanced_content)
-        elif ext == '.md':
-            # Markdown 檔案
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            # 簡單的 Markdown 轉 HTML（實際應用中可能需要更完整的轉換）
-            html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>{file_name}</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }}
-        pre {{ background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }}
-        code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
-    </style>
-</head>
-<body>
-    <pre>{content}</pre>
-</body>
-</html>
-"""
-            self._send_html(html)
-        elif ext == '.ipynb':
-            # Jupyter Notebook
-            html_content = self.notes_handler.convert_ipynb_to_html(file_path)
-            self._send_html(html_content)
-        else:
-            self._send_error("不支援的檔案類型")
-    
-    def _send_html(self, content):
-        """發送 HTML 回應"""
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.end_headers()
-        self.wfile.write(content.encode('utf-8'))
-    
-    def _send_json(self, data):
-        """發送 JSON 回應"""
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.end_headers()
-        self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
-    
-    def _send_file(self, file_path, content_type):
-        """發送檔案"""
-        self.send_response(200)
+        try:
+            if ext == '.pdf':
+                self._send_file(file_path, 'application/pdf')
+            elif ext == '.html':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                self._send_html(self.notes_handler.enhance_html_with_math(content))
+            elif ext == '.md':
+                # 簡單的 Markdown 轉 HTML
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                html = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{file_name}</title></head><body><pre>{content}</pre></body></html>'
+                self._send_html(self.notes_handler.enhance_html_with_math(html))
+            elif ext == '.ipynb':
+                html_content = self.notes_handler.convert_ipynb_to_html(file_path)
+                self._send_html(html_content)
+            else:
+                self._send_error("不支援的檔案類型")
+        except Exception as e:
+            self._send_error(f"讀取或轉換檔案時發生錯誤: {e}")
+
+    def _send_response_header(self, code, content_type):
+        """發送回應標頭"""
+        self.send_response(code)
         self.send_header('Content-Type', content_type)
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         self.end_headers()
+
+    def _send_html(self, content):
+        self._send_response_header(200, 'text/html; charset=utf-8')
+        self.wfile.write(content.encode('utf-8'))
+
+    def _send_json(self, data):
+        self._send_response_header(200, 'application/json; charset=utf-8')
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
+
+    def _send_file(self, file_path, content_type):
+        self._send_response_header(200, content_type)
         with open(file_path, 'rb') as f:
             self.wfile.write(f.read())
-    
-    def _send_error(self, message):
-        """發送錯誤頁面"""
-        html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>錯誤</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; padding: 20px; }}
-        .error {{ color: #e74c3c; padding: 20px; background-color: #fadbd8; border-radius: 5px; }}
-    </style>
-</head>
-<body>
-    <div class="error">
-        <h2>錯誤</h2>
-        <p>{message}</p>
-    </div>
-</body>
-</html>
-"""
-        self.send_response(404)
-        self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.end_headers()
+
+    def _send_error(self, message, code=404):
+        html = f'<!DOCTYPE html><html><head><title>錯誤</title></head><body><h2>發生錯誤</h2><p>{message}</p></body></html>'
+        self._send_response_header(code, 'text/html; charset=utf-8')
         self.wfile.write(html.encode('utf-8'))
-    
+        
     def _send_not_found(self):
-        """發送 404 頁面"""
-        self._send_error("頁面不存在")
-    
+        self._send_error("404 Not Found: 頁面不存在")
+
     def address_string(self):
-        """修正 Unix Socket 的 logging 顯示"""
-        if isinstance(self.client_address, str):
-            return self.client_address
-        return super().address_string()
+        return str(self.client_address)
 
 class HTTPUnixServer(HTTPServer):
     address_family = socket.AF_UNIX
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('-p', '--port')
-    ap.add_argument('-u', '--unix-socket')
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--port', type=int, help='TCP port to listen on.')
+    parser.add_argument('-u', '--unix-socket', help='Path to the Unix socket.')
+    args = parser.parse_args()
+
+    server_address = None
+    ServerClass = HTTPServer
 
     if args.unix_socket:
-        print("Unix server at", repr(args.unix_socket))
-        Path(args.unix_socket).unlink(missing_ok=True)
-        httpd = HTTPUnixServer(args.unix_socket, RequestHandler)
+        socket_path = Path(args.unix_socket)
+        if socket_path.exists():
+            socket_path.unlink()
+        server_address = args.unix_socket
+        ServerClass = HTTPUnixServer
+        print(f"Launching server on Unix socket: {server_address}")
+    elif args.port:
+        server_address = ('127.0.0.1', args.port)
+        ServerClass = HTTPServer
+        print(f"Launching server on TCP port: {args.port}")
     else:
-        # 127.0.0.1 = localhost: only accept connections from the same machine
-        print("TCP server on port", int(args.port))
-        httpd = HTTPServer(('127.0.0.1', int(args.port)), RequestHandler)
+        print("Error: Either --port or --unix-socket must be specified.", file=sys.stderr)
+        sys.exit(1)
+        
+    httpd = ServerClass(server_address, RequestHandler)
+    
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("Server shutting down.")
+    finally:
+        if args.unix_socket:
+            Path(args.unix_socket).unlink(missing_ok=True)
 
-    print("Launching course notes HTTP server")
-    httpd.serve_forever()
 
 if __name__ == '__main__':
     main()
