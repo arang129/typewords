@@ -21,7 +21,7 @@ def setup_typewords():
     return {
         'command': cmd,
         'timeout': 120,          # 給 Vite 啟動時間
-        'absolute_url': True,    # 使用 /proxy/absolute/{port}/，支援絕對路徑與 WebSocket
+        'absolute_url': False,    
         'launcher_entry': {
             'enabled': True,
             'title': '背單字',
