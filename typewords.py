@@ -22,7 +22,7 @@ def setup_typewords():
         'launcher_entry': {
             'enabled': True,
             'icon_path': '/opt/tljh/hub/share/jupyterhub/derivatives.svg',
-            'title': '上課講義',
+            'title': '背單字',
         },
     }
 
