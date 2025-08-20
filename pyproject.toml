@@ -8,7 +8,10 @@ authors = [{name = "Thomas Kluyver", email = "thomas@kluyver.me.uk"}]
 readme = "README.rst"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
-dependencies = ["jupyter-server-proxy >=4.0"]  # v4 required for Unix socket support
+dependencies = [
+    "jupyter-server-proxy >=4.0",  # v4 for Unix socket support
+    "aiohttp"                      # 新增 aiohttp 依賴
+]
 dynamic = ["version", "description"]
 
 [project.urls]
