@@ -15,9 +15,9 @@ __version__ = '0.01'
 # 目標伺服器設定
 TARGET_HOST = 'http://localhost:3000'
 
-def setup_viewhtml():
+def setup_typewords():
     return {
-        'command': [sys.executable, '-m', 'viewhtml', '-u', '{unix_socket}'],
+        'command': [sys.executable, '-m', 'typewords', '-u', '{unix_socket}'],
         'unix_socket': True,
         'launcher_entry': {
             'enabled': True,
