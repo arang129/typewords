@@ -15,7 +15,7 @@ def setup_typewords():
         'bash', '-lc',
         f'cd "{project_dir}" && '
         'VITE_PROXY_PORT={port} '
-        'npm run dev -- --port {port} --strictPort --host 127.0.0.1'
+        'npm run dev -- --port {port} --strictPort --host 0.0.0.0'
     ]
 
     return {
