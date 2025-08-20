@@ -5,7 +5,7 @@
 3) 以 /proxy/absolute/{port}/ 代理（支援絕對路徑與 WebSocket/HMR）
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 def setup_typewords():
     # 固定前端專案路徑（不使用環境變數與 os）
@@ -21,7 +21,7 @@ def setup_typewords():
     return {
         'command': cmd,
         'timeout': 120,          # 給 Vite 啟動時間
-        'absolute_url': False,    
+        'absolute_url': True,    
         'launcher_entry': {
             'enabled': True,
             'title': '背單字',
