@@ -7,7 +7,7 @@ import argparse
 import asyncio
 import aiohttp
 from aiohttp import web
-
+__version__ = "0.0.1"
 # --- 設定 ---
 # 目標網站的地址
 TARGET_HOST = 'localhost'
